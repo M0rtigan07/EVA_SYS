@@ -14,11 +14,11 @@
 
     <div class="main-layout">
         <div class="side-panel">
-            <h3 style="color:var(--blue-tech); font-size:0.7rem; letter-spacing:3px;">MISSION_STATUS</h3>
+            <h3 style="color:var(--blue-tech); font-size:0.7rem; letter-spacing:3px;">ENTRENAMIENTO_STATUS</h3>
 
             <!-- Botón de conexión en tu interfaz -->
 
-            <p style="font-size:0.6rem; color:#adff2f; margin:0;">STREAK_LEVEL</p>
+            <p style="font-size:0.6rem; color:#adff2f; margin:0;">NIVEL DE RACHA</p>
             <div id="display-racha" style="font-size: 1.2rem; font-weight: bold;">0 DÍAS</div>
             <div id="display-rango" style="font-size: 0.7rem; color: #888;">RECLUTA</div>
             <div id="details-box" class="card"></div>
@@ -127,16 +127,16 @@
             <div class="side-module tools-section" id="tools-container" style="display:none;">
 
                 <div class="card" style="display: flex; flex-direction: column; align-items: center; gap: 15px; border-left-color: orangered;">
-                    <button class="tool-btn" onclick="EVA.importarDatosDesdeNube()" title="Sincronizar Nube"
-                        style="color: #00ff88; border-color: rgba(0,255,136,0.3);">
-                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2"
-                            fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17.5 19a5.5 5.5 0 0 0 2.5-10.5 8.5 8.5 0 1 0-15.5 1.5A4.5 4.5 0 0 0 5 19"></path>
-                            <polyline points="12 12 12 16"></polyline>
-                            <polyline points="9 13 12 10 15 13"></polyline>
-                        </svg>
-                        <span>CLOUD</span>
-                    </button>
+                    <!-- <button class="tool-btn" onclick="EVA.importarDatosDesdeNube()" title="Sincronizar Nube" -->
+                        <!-- style="color: #00ff88; border-color: rgba(0,255,136,0.3);"> -->
+                        <!-- <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" -->
+                            <!-- fill="none" stroke-linecap="round" stroke-linejoin="round"> -->
+                            <!-- <path d="M17.5 19a5.5 5.5 0 0 0 2.5-10.5 8.5 8.5 0 1 0-15.5 1.5A4.5 4.5 0 0 0 5 19"></path> -->
+                            <!-- <polyline points="12 12 12 16"></polyline> -->
+                            <!-- <polyline points="9 13 12 10 15 13"></polyline> -->
+                        <!-- </svg> -->
+                        <!-- <span>CLOUD</span> -->
+                    <!-- </button> -->
 
                     <button class="tool-btn danger" onclick="EVA.prepararBorrado()" title="Purgar Memoria Local"
                         style="color: var(--hal-red); border-color: rgba(255,50,50,0.3);">
