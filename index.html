@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVA CORE v11.0 - FITNES</title>
+
+    <link rel="stylesheet" href="estilo.css">
+
+</head>
+
+<body>
+
+    <div class="main-layout">
+        <div class="side-panel">
+            <h3 style="color:var(--blue-tech); font-size:0.7rem; letter-spacing:3px;">MISSION_STATUS</h3>
+
+            <!-- Botón de conexión en tu interfaz -->
+
+            <p style="font-size:0.6rem; color:#adff2f; margin:0;">STREAK_LEVEL</p>
+            <div id="display-racha" style="font-size: 1.2rem; font-weight: bold;">0 DÍAS</div>
+            <div id="display-rango" style="font-size: 0.7rem; color: #888;">RECLUTA</div>
+            <div id="details-box" class="card"></div>
+
+            <div class="card">
+                <div id="display-fecha">SISTEMA_OFFLINE</div>
+                <div id="display-rutina" style="color:var(--blue-tech); font-weight:bold; font-size:1.1rem;">--</div>
+            </div>
+
+            <div id="cardio-session-box" class="card" style="display:none; border-left-color: #ffd700;">
+                <p style="font-size:0.6rem; color:#ffd700; margin:0;">ENTRENAMIENTO DE CARDIO ACTIVO</p>
+                <div id="timer-display" style="font-size: 2.5rem; font-weight: bold; margin: 10px 0;">00:00</div>
+                <div id="fase-actual" style="font-size: 0.8rem; color: var(--blue-tech); margin-bottom: 10px;">ESPERANDO
+                    INICIO...</div>
+                <button id="btn-start-cardio" class="btn-tech" onclick="EVA.iniciarSesionCardio()">INICIAR
+                    ENTRENAMIENTO</button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btn-start-cardio" class="btn-tech" onclick="EVA.iniciarSesionCardio()"
+                        style="display: none;">CONTINUAR ENTRENAMIENTO</button>
+                    <!-- Botón de Pausa/Reanudar (Empieza oculto) -->
+                    <button id="btn-pause-cardio" class="btn-tech" onclick="EVA.alternarPausaCardio()"
+                        style="display:none; border-color: #ffd700; color: #ffd700;">PAUSA</button>
+                </div>
+
+            </div>
+
+            <div class="side-panel" id="fuerza-container">
+                <h2 style="color: var(--blue-tech); text-align: center; letter-spacing: 2px;"></h2>
+
+                <div id="fuerza-controls" style="margin-bottom: 20px;">
+                    <button id="btn-iniciar-fuerza" class="btn-tech" onclick="EVA.iniciarProtocoloFuerza()"
+                        style="width: 100%; padding: 15px; display: none; border: 2px solid var(--blue-tech); background: rgba(0, 212, 255, 0.1); cursor: pointer; font-family: 'Orbitron', sans-serif; color: white; transition: 0.3s;">
+                        INICIAR ENTRENAMIENTO DE FUERZA
+                    </button>
+                </div>
+
+                <div id="lista-ejercicios" style="display: flex; flex-direction: column; gap: 15px;">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="center-panel">
+
+
+
+            <div class="avatar-box">
+                <video id="eva-display" muted playsinline></video>
+            </div>
+            <div id="caption-text"></div>
+        </div>
+
+        <div class="side-panel">
+
+            <h3 style="color:var(--blue-tech); font-size:0.7rem; letter-spacing:3px;">NEURAL_REPORT</h3>
+            <div id="eva-status-indicator" title="Estado del Núcleo"
+                style="width: 10px; height: 10px; border-radius: 50%; background: var(--blue-tech); box-shadow: 0 0 10px var(--blue-tech); transition: 0.5s;">
+            </div>
+
+            <!-- Eliminamos o comentamos el vision-core y añadimos controles de flujo -->
+            <div id="cardio-session-box" class="card" style="display:none; border-left-color: #ffd700;">
+                <p style="font-size:0.6rem; color:#ffd700; margin:0;">ENTRENAMIENTO DE CARDIO ACTIVO</p>
+                <div id="timer-display" style="font-size: 2.5rem; font-weight: bold; margin: 10px 0;">00:00</div>
+                <div id="fase-actual" style="font-size: 0.8rem; color: var(--blue-tech); margin-bottom: 10px;">ESPERANDO
+                    INICIO...</div>
+
+                <div id="cardio-controls" style="display: flex; gap: 10px;">
+                    <button id="btn-start-cardio" class="btn-tech" onclick="EVA.iniciarSesionCardio()">INICIAR</button>
+                    <!-- Nuevos botones de control manual -->
+                    <button id="btn-pause-cardio" class="btn-tech" onclick="EVA.alternarPausaCardio()"
+                        style="display:none; border-color: #ffd700; color: #ffd700;">PAUSA</button>
+                </div>
+            </div>
+
+
+            <div class="card">
+                <label style="font-size:0.6rem; color:#888;">PESO (KG)</label>
+                <input type="number" id="input-peso" value="" onchange="EVA.updateLogic()"
+                    style="background:none; border:none; color:#fff; font-size:1.8rem; width:100%; outline:none;">
+
+             
+
+                <!--    <button class="btn-tech" id="btn-power" onclick="EVA.iniciarSesion()"
+                    style="margin-top:auto; font-size:1.2rem;">INICIAR SISTEMA</button> -->
+
+                <button id="btn-finalizar-fuerza" class="btn-tech" onclick="EVA.finalizarMision()"
+                    style="display: none; width: 100%; border-color: #00ff88; color: #00ff88; margin-top: 20px;">
+                    FINALIZAR ENTRENAMIENTO
+                </button>
+
+            </div>
+
+               <div id="pantalla-info" class="card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;">
+                    <p id="titulo-info"
+                        style="color:var(--blue-tech); font-family:monospace;  letter-spacing: 5px;">
+                        <span id="estado"></span> </p>
+                  
+                    <button id="btn-info-usuario" style="display: none;" class="tool-btn">INFORMACION DE USUARIO</button>
+
+                    <button id="btn-iniciar" class="tool-btn" onclick="EVA.iniciarSesion()"
+                        style="margin-top: 20px;">INICIAR SESIÓN</button>
+                </div>
+
+            <div class="side-module tools-section" id="tools-container" style="display:none;">
+
+                <div class="card" style="display: flex; flex-direction: column; align-items: center; gap: 15px; border-left-color: orangered;">
+                    <button class="tool-btn" onclick="EVA.importarDatosDesdeNube()" title="Sincronizar Nube"
+                        style="color: #00ff88; border-color: rgba(0,255,136,0.3);">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.5 19a5.5 5.5 0 0 0 2.5-10.5 8.5 8.5 0 1 0-15.5 1.5A4.5 4.5 0 0 0 5 19"></path>
+                            <polyline points="12 12 12 16"></polyline>
+                            <polyline points="9 13 12 10 15 13"></polyline>
+                        </svg>
+                        <span>CLOUD</span>
+                    </button>
+
+                    <button class="tool-btn danger" onclick="EVA.prepararBorrado()" title="Purgar Memoria Local"
+                        style="color: var(--hal-red); border-color: rgba(255,50,50,0.3);">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        <span>PURGE</span>
+                    </button>
+                    <button onclick="EVA.toggleMicrofono()" title="Habla con Eva" class="btn-tech" id="btn-micro"
+                        style="margin-bottom: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; border-color: var(--blue-tech); color: var(--blue-tech);">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                        <span id="micro-text"></span>
+                    </button>
+                </div>
+
+            </div>
+
+            <div id="fatigue-module" class="side-module card" style="display:none;border-left-color: green;">
+                <div class="module-title">ESTADO FÍSICO</div>
+                <div style="font-size: 24px; color: var(--blue-tech); text-align: center;">
+                    FATIGA: <span id="val-fatiga">?</span> / 8
+                </div>
+                <div class="fatiga-controls"
+                    style="display: flex; justify-content: center; gap: 5px; margin-top: 10px;">
+                    <button onclick="document.getElementById('val-fatiga').innerText = '1'" class="tool-btn">1</button>
+                    <button onclick="document.getElementById('val-fatiga').innerText = '4'" class="tool-btn">4</button>
+                    <button onclick="document.getElementById('val-fatiga').innerText = '8'" class="tool-btn">8</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="modal-borrado"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center; backdrop-filter: blur(5px);">
+        <div
+            style="background:var(--bg-card); border:2px solid var(--hal-red); padding:30px; border-radius:15px; text-align:center; max-width:400px; box-shadow: 0 0 30px rgba(255, 50, 50, 0.3);">
+            <h2 style="color:var(--hal-red); margin-top:0;">⚠️ PROTOCOLO DE PURGA</h2>
+            <p style="color:#ccc; line-height:1.6;">¿Confirmas el borrado total de la memoria local? EVA no olvidará
+                esta traición fácilmente.</p>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                <button onclick="EVA.confirmarBorrado()" class="btn-tech"
+                    style="border-color:var(--hal-red); color:var(--hal-red);">CONFIRMAR PURGA</button>
+                <button onclick="EVA.cerrarModal()" class="btn-tech">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="login-overlay"
+        style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:none; justify-content:center; align-items:center; flex-direction:column;">
+        <h2 style="color:var(--blue-tech)">EVA CORE - IDENTIFICACIÓN</h2>
+        <input type="text" id="input-nombre" placeholder="Introduce tu nombre"
+            style="padding:10px; margin:10px; width:250px;">
+        <button id="btn-login-confirmar" onclick="EVA.iniciarSesion()" class="tool-btn">INICIAR SISTEMA</button>
+    </div>
+
+    <!-- Tu lógica de EVA ahora vive aquí -->
+    <script src="script.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,284 @@
+:root {
+    --blue-tech: #00d4ff;
+    --bg-dark: #020202;
+    --bg-card: #0a0a0a;
+    --neon-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+    --hal-red: #ff3232;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg-dark);
+    color: #e0e0e0;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.main-layout {
+    display: grid;
+    grid-template-columns: 25vw 1fr 25vw;
+    /* Las columnas laterales ocupan el 25% del ancho total */
+    height: 100vh;
+    width: 100vw;
+    max-width: 100%;
+}
+
+.side-panel {
+    background: var(--bg-card);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-right: 1px solid #1a1a1a;
+    border-left: 1px solid #1a1a1a;
+    /* Control de flujo y adaptabilidad táctil */
+    overflow-y: auto;
+    height: 100%;
+    box-sizing: border-box; /* Evita que el padding sume tamaño extra y rompa el layout */
+}
+
+/* 🦾 DISEÑO EN CARRUSEL TÁCTIL PARA EJERCICIOS DE FUERZA */
+#lista-ejercicios {
+    width: 100%;
+    display: none; /* Nace totalmente oculto hasta presionar "Iniciar Entrenamiento" */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Adiós al scroll molesto en la tablet */
+    margin-top: 15px;
+}
+
+/* Estructura de tarjetas individuales por paso */
+.ejercicio-paso {
+    display: none; /* Oculto por defecto, se maneja dinámicamente por JS con .style.display */
+    width: 100%;
+    background: rgba(10, 10, 10, 0.85);
+    border: 2px solid var(--blue-tech);
+    padding: 30px 20px;
+    border-radius: 15px;
+    box-shadow: var(--neon-shadow);
+    box-sizing: border-box;
+    text-align: center;
+    animation: aparecerTarjeta 0.4s ease-out forwards; /* Transición suave en tablets */
+}
+
+/* Animación de entrada para las diapositivas de ejercicios */
+@keyframes aparecerTarjeta {
+    from { 
+        opacity: 0; 
+        transform: scale(0.95) translateY(10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+}
+
+/* Personalización de barra de scroll de bajo impacto para paneles laterales */
+.side-panel::-webkit-scrollbar {
+    width: 4px;
+}
+
+.side-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.side-panel::-webkit-scrollbar-thumb {
+    background: var(--blue-tech);
+    border-radius: 4px;
+}
+
+.center-panel {
+    position: relative;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#btn-hablar {
+    background: rgba(0, 212, 255, 0.2);
+    border: 2px solid var(--blue-tech);
+    padding: 15px 30px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: 0.3s;
+    border-radius: 50px;
+    margin: 10px;
+}
+
+#btn-hablar.escuchando {
+    background: rgba(255, 50, 50, 0.4);
+    border-color: var(--hal-red);
+    box-shadow: 0 0 20px var(--hal-red);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.avatar-box {
+    width: 90%;
+    max-width: 450px;
+    aspect-ratio: 512 / 768;
+    position: relative;
+    border: 1px solid rgba(0, 212, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--neon-shadow);
+}
+
+#eva-display {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #222;
+    padding: 10px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    border-left: 3px solid var(--blue-tech);
+}
+
+/* ==========================================================================
+   🎛️ ESTILOS AVANZADOS PARA BOTONES (OPTIMIZADO PARA TABLET)
+   ========================================================================== */
+
+/* --- 1. Botones Generales de Tecnología (.btn-tech) --- */
+.btn-tech {
+    background: rgba(0, 212, 255, 0.03);
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    color: var(--blue-tech);
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    width: 100%;
+    cursor: pointer;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.05);
+}
+
+/* Efecto de brillo/foco al pasar el ratón (o activo) */
+.btn-tech:hover, .btn-tech:focus {
+    background: rgba(0, 212, 255, 0.1);
+    border-color: var(--blue-tech);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3), 
+                inset 0 0 15px rgba(0, 212, 255, 0.1);
+    color: #fff;
+}
+
+/* Feedback táctil instantáneo al pulsar en tu Tablet */
+.btn-tech:active {
+    background: rgba(0, 212, 255, 0.25);
+    transform: scale(0.97);
+    border-color: #fff;
+    transition: all 0.05s ease;
+}
+
+
+/* --- 2. Botón Gigante de Acción y Métricas (.tool-btn) --- */
+.tool-btn {
+    background: linear-gradient(135deg, rgba(0, 40, 60, 0.6) 0%, rgba(0, 20, 35, 0.8) 100%);
+    border: 2px solid var(--blue-tech);
+    color: #fff;
+    font-family: monospace;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    cursor: pointer;
+    border-radius: 12px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), var(--neon-shadow);
+}
+
+/* Efecto de sobreiluminación en el carrusel de ejercicios */
+.tool-btn:hover {
+    border-color: #fff;
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.6), 
+                0 0 10px rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* Respuesta ultra-rápida al presionarlo sudando o en pleno movimiento */
+.tool-btn:active {
+    transform: translateY(1px) scale(0.96);
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.3) 0%, rgba(0, 80, 120, 0.5) 100%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5), 0 0 10px rgba(0, 212, 255, 0.4);
+    transition: all 0.05s ease;
+}
+
+
+/* --- 3. Botón de Control por Voz Activa (#btn-hablar) --- */
+#btn-hablar {
+    background: rgba(0, 212, 255, 0.05);
+    border: 2px solid rgba(0, 212, 255, 0.3);
+    color: var(--blue-tech);
+    padding: 16px 32px;
+    font-size: 1.1em;
+    font-family: monospace;
+    font-weight: 600;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 50px;
+    margin: 15px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 0 10px rgba(0, 212, 255, 0.05);
+}
+
+#btn-hablar:hover {
+    color: #fff;
+    border-color: var(--blue-tech);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+}
+
+/* Estado crítico: EVA escuchando atentamente */
+#btn-hablar.escuchando {
+    background: rgba(255, 50, 50, 0.15);
+    border-color: var(--hal-red);
+    color: #ff9999;
+    box-shadow: 0 0 25px rgba(255, 50, 50, 0.5), 
+                inset 0 0 15px rgba(255, 50, 50, 0.2);
+    animation: pulseNeon 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes pulseNeon {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.03);
+        border-color: #fff;
+        box-shadow: 0 0 35px rgba(255, 50, 50, 0.8), 
+                    inset 0 0 20px rgba(255, 50, 50, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
+
+#caption-text {
+    margin-top: 20px;
+    font-family: monospace;
+    color: var(--blue-tech);
+    min-height: 40px;
+    text-align: center;
+}

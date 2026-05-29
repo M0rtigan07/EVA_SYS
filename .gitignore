@@ -1,0 +1,19 @@
+# Dependencias de Node
+node_modules/
+package-lock.json
+npm-debug.log
+
+# Archivos de entorno y secretos (IMPORTANTE)
+.env
+.env.local
+.env.*.local
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs y bases de datos locales (si generas archivos .db para pruebas)
+*.log
+*.db
+*.sqlite
+*.sqlite-journal
