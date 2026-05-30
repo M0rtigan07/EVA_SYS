@@ -1618,6 +1618,13 @@ EVA.iniciarSesion = async function () {
 
 // Carga inicial al abrir la app
 document.addEventListener('DOMContentLoaded', () => {
+
+  const btnIniciar = document.getElementById('btn-iniciar');
+    if (btnIniciar) {
+        btnIniciar.addEventListener('click', () => {
+            EVA.iniciarSesion();  // Llama a tu método aquí
+        });
+    }
  // EVA.animarBienvenida();
 
   // Verificar si ya hay una sesión activa
