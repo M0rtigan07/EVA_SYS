@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const { usuario, tipo, modo, fatiga, peso} = req.body;
 
     // Validación básica: aseguramos que vienen los datos necesarios
-    if (!usuario || !tipo || !modo) {
+    if (!tipo || !modo ) {
       return res.status(400).json({ error: "Datos incompletos" });
     }
 

@@ -22,7 +22,7 @@ class EVASystem {
     this.misionCumplida = this.verificarSiMisionCompletadaHoy();
     this.streak = localStorage.getItem('eva_streak') ? parseInt(localStorage.getItem('eva_streak')) : 0;
     this.lastTrainingDate = localStorage.getItem('eva_last_date') || null;
-    this.estado="";
+    this.estado = "";
 
     this.ejerciciosFuerza = ["Abdominales", "Sentadillas", "Pesas_Frontal", "Pesas_Lateral"];
 
@@ -119,17 +119,7 @@ class EVASystem {
   }
 
   // FUNCIONES DE INTERFAZ Y CONTROL PRINCIPALES
-
-  async animarBienvenida() {
-    const mensaje = document.getElementById('mensaje-bienvenida');
-    const textos = ["SISTEMA OPERATIVO: ONLINE", "RECONOCIENDO USUARIO...", "LISTA PARA EL ENTRENAMIENTO"];
-
-    for (let t of textos) {
-      mensaje.innerText = t;
-      await new Promise(r => setTimeout(r, 1500)); // Espera 1.5s entre mensajes
-    }
-    mensaje.innerText = "ESPERANDO COMANDOS...";
-  }
+ 
 
   // Mejora visual al iniciar login
   async iniciarSesion() {
@@ -169,33 +159,41 @@ class EVASystem {
   }
 
   // 1. Método para solicitar login
-  solicitarIdentidad() {
+
+  async solicitarIdentidad() {
     const overlay = document.getElementById('login-overlay');
-    overlay.style.display = 'flex'; // Mostramos el login
+    // 1. Si ya existe, no preguntes nada, devuelve el nombre y continúa
+    const usuarioGuardado = localStorage.getItem('eva_user');
+    if (usuarioGuardado) {
+      document.getElementById('display-usuario').innerText = `OPERADOR: ${usuarioGuardado}`;
+      return usuarioGuardado;
+    }
 
-    const btnIniciar = document.getElementById('btn-iniciar');
-    const btnInfoUsuario = document.getElementById('btn-info-usuario');
-
+    // 2. Si no existe, activamos la interfaz "Estilo Terminal"
     return new Promise((resolve) => {
-      document.getElementById('btn-login-confirmar').onclick = () => {
-        const nombre = document.getElementById('input-nombre').value;
-        if (nombre) {
-          //  document.getElementById('pantalla-bienvenida').style.display = 'none'; // Ocultamos la bienvenida
-          this.animarBienvenida(); // Iniciamos la animación de bienvenida
-          btnInfoUsuario.style.display = 'block';
+      const overlay = document.getElementById('login-overlay');
+      overlay.style.display = 'block';
 
-          btnIniciar.disabled = true;
-          btnIniciar.innerText = "SISTEMA OPERATIVO: ONLINE";
-          btnIniciar.style.opacity = "0.6";
-          btnIniciar.style.cursor = "default";
+      document.getElementById('btn-login-confirmar').onclick = () => {
+        const nombre = document.getElementById('input-nombre').value.trim();
+        if (nombre) {
+          // Guardamos la identidad
           localStorage.setItem('eva_user', nombre);
-          overlay.style.display = 'none'; // Ocultamos
-          resolve(nombre);
+
+          // Animación visual de "Vínculo establecido"
+          overlay.style.display = 'none';
+          document.getElementById('btn-info-usuario').innerText = `OPERADOR: ${nombre}`;
+
+          resolve(nombre); // EVA continúa su flujo
           this.init();
         }
       };
     });
   }
+
+
+  // Dentro de tu clase EVASystem
+  
 
   // --- MÓDULO DE RACHAS Y DEGRADACIÓN ---
 
@@ -682,7 +680,7 @@ class EVASystem {
     this.lastTrainingDate = localStorage.getItem('eva_last_date');
 
     this.verificarDegradacionRacha();
-
+  
     // 4. SINCRONIZACIÓN DE INTERFAZ
     document.getElementById('input-peso').value = this.lastWeight;
     document.getElementById('display-racha').innerText = `${this.streak} DÍAS`;
@@ -772,14 +770,14 @@ class EVASystem {
     // FORZAMOS LA LECTURA FRESCA DEL DATO
     this.streak = this.obtenerRachaActualizada();
 
-     // Si la racha es baja, EVA avisa que estamos en modo conservador
+    // Si la racha es baja, EVA avisa que estamos en modo conservador
     if (this.streak < 3) {
       document.getElementById('estado').innerText = "MODO: RECUPERACIÓN";
       document.getElementById('estado').style.color = "yellow";
-      this.estado="RECUPERACION";
+      this.estado = "RECUPERACION";
     } else {
       document.getElementById('estado').innerText = "MODO: PROGRESIÓN";
-      this.estado="PROGRESION";
+      this.estado = "PROGRESION";
     }
 
     // 1. FORZAMOS EL CÁLCULO
@@ -972,10 +970,10 @@ class EVASystem {
     if (this.streak < 3) {
       document.getElementById('estado').innerText = "MODO: RECUPERACIÓN";
       document.getElementById('estado').style.color = "yellow";
-      this.estado="RECUPERACION";
+      this.estado = "RECUPERACION";
     } else {
       document.getElementById('estado').innerText = "MODO: PROGRESIÓN";
-      this.estado="PROGRESION";
+      this.estado = "PROGRESION";
     }
 
     const reps = config.reps;
@@ -1246,47 +1244,48 @@ class EVASystem {
 
   // 1. MÉTODO PARA GUARDAR EN LA NUBE (Memoria a largo plazo)
 
- /*  async guardarDatosEnNube(pesoFinal, fatigaFinal) {
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxeYcQAHGoDzXD88RgbKX8nzpWWUjxvB1uKRVSH44i_f9nqCC8S4uc9yAfPLWlIFE2d/exec"; // Tu URL de Google Apps Script
+  /*  async guardarDatosEnNube(pesoFinal, fatigaFinal) {
+     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxeYcQAHGoDzXD88RgbKX8nzpWWUjxvB1uKRVSH44i_f9nqCC8S4uc9yAfPLWlIFE2d/exec"; // Tu URL de Google Apps Script
+ 
+     // Solo enviamos lo estrictamente necesario para el historial
+     const datos = {
+       fecha: new Date().toLocaleDateString('es-ES'), // Solo fecha (DD/MM/AAAA)
+       rutina: this.routine || "FUERZA",
+       peso: pesoFinal,
+       fatiga: fatigaFinal,
+       racha: this.streak || 0
+     };
+ 
+     console.log("🚀 Enviando reporte final a la nube...", datos);
+ 
+     try {
+       await fetch(URL_SCRIPT, {
+         method: 'POST',
+         mode: 'no-cors',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify(datos)
+       });
+       console.log("✅ Registro diario completado con éxito.");
+     } catch (e) {
+       console.error("❌ Error al sincronizar con la nube:", e);
+     }
+   } */
 
-    // Solo enviamos lo estrictamente necesario para el historial
-    const datos = {
-      fecha: new Date().toLocaleDateString('es-ES'), // Solo fecha (DD/MM/AAAA)
-      rutina: this.routine || "FUERZA",
-      peso: pesoFinal,
-      fatiga: fatigaFinal,
-      racha: this.streak || 0
-    };
 
-    console.log("🚀 Enviando reporte final a la nube...", datos);
-
-    try {
-      await fetch(URL_SCRIPT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datos)
-      });
-      console.log("✅ Registro diario completado con éxito.");
-    } catch (e) {
-      console.error("❌ Error al sincronizar con la nube:", e);
-    }
-  } */
-
-  
-    /**
- * Envía los datos del entrenamiento a la API de Vercel.
- * Se ejecuta en segundo plano sin bloquear la interfaz.
- */
-async  guardarDatosEnNube(tipo, modo, pesoFinal, fatigaFinal) {
+  /**
+* Envía los datos del entrenamiento a la API de Vercel.
+* Se ejecuta en segundo plano sin bloquear la interfaz.
+*/
+  async guardarDatosEnNube(tipo, modo, fatiga, peso) {
+    const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
     // 1. Datos que vamos a enviar
     const payload = {
-        usuario: this.userId, // El ID único que generaste en el constructor
-        tipo: tipo,           // 'fuerza' o 'cardio'
-        modo: modo,           // '3x5' o 'cronometrado'
-        fatiga: fatigaFinal,  // El nivel de fatiga
-        peso: pesoFinal       // El peso registrado
-                // El dato numérico
+      usuario: nombreUsuario, // El ID único que generaste en el constructor
+      tipo: tipo,           // 'fuerza' o 'cardio'
+      modo: modo,           // '3x5' o 'cronometrado'
+      fatiga: fatiga,  // El nivel de fatiga
+      peso: peso       // El peso registrado
+      // El dato numérico
     };
 
     // 2. Detector de entorno:
@@ -1295,30 +1294,30 @@ async  guardarDatosEnNube(tipo, modo, pesoFinal, fatigaFinal) {
     const esLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
     if (esLocal) {
-        console.log("EVA: Modo Local. Sincronización omitida.", payload);
-        return; // Salimos de la función, el guardado local ya ocurre fuera de aquí
+      console.log("EVA: Modo Local. Sincronización omitida.", payload);
+      return; // Salimos de la función, el guardado local ya ocurre fuera de aquí
     }
 
     // 3. Intento de envío a la API (Vercel + Turso)
     try {
-        const respuesta = await fetch('/api/guardar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
+      const respuesta = await fetch('/api/guardar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
 
-        if (respuesta.ok) {
-            console.log("EVA: Datos registrados en la nube con éxito.");
-        } else {
-            console.error("EVA: Error al guardar en la nube (Status: " + respuesta.status + ")");
-        }
+      if (respuesta.ok) {
+        console.log("EVA: Datos registrados en la nube con éxito.");
+      } else {
+        console.error("EVA: Error al guardar en la nube (Status: " + respuesta.status + ")");
+      }
     } catch (error) {
-        // Esto captura fallos de red (ej: usuario sin internet)
-        console.warn("EVA: Sin conexión a la base de datos externa. Los datos están seguros en local.");
+      // Esto captura fallos de red (ej: usuario sin internet)
+      console.warn("EVA: Sin conexión a la base de datos externa. Los datos están seguros en local.");
     }
-}
+  }
 
 
   prepararBorrado() {
@@ -1619,7 +1618,7 @@ EVA.iniciarSesion = async function () {
 
 // Carga inicial al abrir la app
 document.addEventListener('DOMContentLoaded', () => {
-  EVA.animarBienvenida();
+ // EVA.animarBienvenida();
 
   // Verificar si ya hay una sesión activa
   const tokenGuardado = localStorage.getItem('eva_session');

@@ -15,6 +15,100 @@ body {
     overflow: hidden;
 }
 
+/* Overlay principal (el fondo oscuro full-screen) */
+#login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.98);
+    color: var(--blue-tech);
+    font-family: 'Courier New', Courier, monospace;
+    display: none; /* Controlado por JS */
+    /* Asegura el centrado VERTICAL y HORIZONTAL del *contenedor* */
+    justify-content: center;
+    align-items: center;
+}
+
+/* NUEVO: El contenedor central que agrupa los elementos */
+#login-overlay .login-container {
+    display: flex;
+    flex-direction: column; /* Apila elementos verticalmente */
+    align-items: center;
+    gap: 15px; /* Espaciado entre elementos */
+    padding: 30px;
+    border: 1px solid var(--blue-tech); /* Borde sutil del diálogo */
+    background: #000; /* Fondo negro puro para separarlo del overlay */
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(5, 1, 41, 0.2); /* Brillo verde sutil */
+}
+
+/* NUEVO: Estilo del título */
+.login-title {
+    margin: 0 0 10px 0; /* Espaciado inferior */
+    font-size: 1.2rem;
+    color: var(--blue-tech);
+    text-transform: uppercase;
+    font-weight: normal;
+    text-shadow: 0 0 5px var(--blue-tech); /* Brillo terminal */
+}
+
+/* Estilo actualizado del Input (se veía bien, pero lo refinamos) */
+#login-overlay input {
+    width: 250px; /* Ancho específico */
+    max-width: 80%; /* Capa para móviles */
+    background: #111;
+    border: 1px solid var(--blue-tech);
+    color: var(--blue-tech);
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 1rem;
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Estilo para el texto del placeholder */
+#login-overlay input::placeholder {
+    color: rgba(0, 255, 65, 0.6); /* Verde más claro */
+}
+
+/* NUEVO: Estilo del botón (reemplaza el genérico blanco) */
+#login-overlay button {
+    width: 250px; /* Mismo ancho que el input */
+    max-width: 80%; /* Mismo ancho máximo que el input */
+    background: #111; /* Fondo oscuro */
+    border: 1px solid var(--blue-tech); /* Borde azul */
+    color: var(--blue-tech); /* Texto azul */
+    padding: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s; /* Efecto suave de hover */
+}
+
+/* Opcional: Efecto al pasar el ratón */
+#login-overlay button:hover {
+    background: var(--blue-tech);
+    color: #000; /* Texto negro sobre fondo azul */
+}
+
+#login-overlay button:active {
+    background: rgba(0, 255, 65, 0.8);
+    transform: translateY(1px); /* Pequeño efecto de pulsación */
+}
+
+#input-nombre {
+    background: transparent;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    padding: 10px;
+    text-align: center;
+}
+
 .main-layout {
     display: grid;
     grid-template-columns: 25vw 1fr 25vw;
