@@ -620,12 +620,13 @@ class EVASystem {
     btnIniciar.style.opacity = "0.6";
     btnIniciar.style.cursor = "default";
 
-    const btPurgar = document.getElementById('btn-purgar');
-    btPurgar.style.display = 'none'; // Ocultamos el botón de purgar datos
+   
 
-    const tools = document.getElementById('tools-container');
-    tools.style.display = 'block'; // Mostramos las herramientas al iniciar sesión
+    
+    
 
+
+   
     // 1. Lo primero: ¿Ya entreno hoy?
     const bloqueado = this.checkBloqueoDiario();
 
@@ -1325,6 +1326,31 @@ class EVASystem {
     }
   }
 
+  async sincronizarDesdeNube() {
+    const usuario = localStorage.getItem('eva_user');
+    console.log("EVA: Iniciando sincronización de descarga...");
+    this.hablar("Sincronizando historial desde la nube. Esto asegura que tu progreso esté actualizado incluso sin conexión.");
+
+    try {
+        const respuesta = await fetch(`/api/historial?usuario=${encodeURIComponent(usuario)}`);
+        const datosNube = await respuesta.json();
+
+        if (respuesta.ok) {
+            // Guardamos el historial completo en un objeto local de la app
+            // para que EVA pueda consultarlo sin internet
+            localStorage.setItem('eva_historial_local', JSON.stringify(datosNube));
+            console.log("EVA: Historial sincronizado con éxito. Registros:", datosNube.length);
+            this.hablar("Sincronización completa. Historial actualizado con los datos más recientes de la nube.");
+        } else {
+            console.error("EVA: Error al descargar datos:", datosNube.error);
+              this.hablar("No se pudo sincronizar con la nube. Usando datos locales existentes.");
+        }
+    } catch (error) {
+        console.warn("EVA: No se pudo conectar a la nube. Usando datos locales existentes.");
+          this.hablar("No se pudo conectar a la nube. Usando datos locales existentes.");
+    }
+}
+
 
   prepararBorrado() {
     // 1. EVA se enoja visualmente
@@ -1642,10 +1668,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnInfoUsuario = document.getElementById('btn-info-usuario');
     btnInfoUsuario.innerText = `INFO USUARIO: ${data.user}`;
     btnInfoUsuario.style.display = "block";
+
     const btnIniciar = document.getElementById('btn-iniciar');
     btnIniciar.innerText = " INICIAR SISTEMA OPERATIVO";
     btnIniciar.onclick = () => {
       EVA.init();
     };
+
+    const btnSinc = document.getElementById('btnSinc');
+    btnSinc.onclick = () => {
+      EVA.sincronizarDesdeNube();
+    };
+
   }
 });
