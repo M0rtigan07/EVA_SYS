@@ -28,6 +28,19 @@
                 <div id="display-rutina" style="color:var(--blue-tech); font-weight:bold; font-size:1.1rem;">--</div>
             </div>
 
+            <div id="fatigue-module" class="side-module card" style="display:none;border-left-color: green;">
+                <div class="module-title">ESTADO FÍSICO</div>
+                <div style="font-size: 24px; color: var(--blue-tech); text-align: center;">
+                    FATIGA: <span id="val-fatiga">?</span> / 8
+                </div>
+                <div class="fatiga-controls"
+                    style="display: flex; justify-content: center; gap: 5px; margin-top: 10px;">
+                    <button onclick="document.getElementById('val-fatiga').innerText = '1'" class="tool-btn">1</button>
+                    <button onclick="document.getElementById('val-fatiga').innerText = '4'" class="tool-btn">4</button>
+                    <button onclick="document.getElementById('val-fatiga').innerText = '8'" class="tool-btn">8</button>
+                </div>
+            </div>
+
             <div id="cardio-session-box" class="card" style="display:none; border-left-color: #ffd700;">
                 <p style="font-size:0.6rem; color:#ffd700; margin:0;">ENTRENAMIENTO DE CARDIO ACTIVO</p>
                 <div id="timer-display" style="font-size: 2.5rem; font-weight: bold; margin: 10px 0;">00:00</div>
@@ -61,18 +74,7 @@
 
             </div>
 
-            <div id="fatigue-module" class="side-module card" style="display:none;border-left-color: green;">
-                <div class="module-title">ESTADO FÍSICO</div>
-                <div style="font-size: 24px; color: var(--blue-tech); text-align: center;">
-                    FATIGA: <span id="val-fatiga">?</span> / 8
-                </div>
-                <div class="fatiga-controls"
-                    style="display: flex; justify-content: center; gap: 5px; margin-top: 10px;">
-                    <button onclick="document.getElementById('val-fatiga').innerText = '1'" class="tool-btn">1</button>
-                    <button onclick="document.getElementById('val-fatiga').innerText = '4'" class="tool-btn">4</button>
-                    <button onclick="document.getElementById('val-fatiga').innerText = '8'" class="tool-btn">8</button>
-                </div>
-            </div>
+
 
         </div>
 
@@ -153,7 +155,7 @@
                     <!-- <span>CLOUD</span> -->
                     <!-- </button> -->
 
-                    <button class="tool-btn danger" onclick="EVA.prepararBorrado()" title="Purgar Memoria Local"
+                    <button class="tool-btn danger" id="btn-purgar" onclick="EVA.prepararBorrado()" title="Purgar Memoria Local"
                         style="color: var(--hal-red); border-color: rgba(255,50,50,0.3);">
                         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2"
                             fill="none" stroke-linecap="round" stroke-linejoin="round">

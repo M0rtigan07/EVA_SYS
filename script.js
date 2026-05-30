@@ -9,6 +9,7 @@ class EVASystem {
     this.initialized = false;
     this.wakeLock = null;
     this.tiempoRestanteAlPausar = 0;
+	this.user = "";
     //  this.ausenciaDetectada = false;
     this.timerReactivacion = null;
     this.segundosParaReactivar = 25; // Ajusta aquí el tiempo que quieras de margen
@@ -164,6 +165,7 @@ class EVASystem {
     const overlay = document.getElementById('login-overlay');
     // 1. Si ya existe, no preguntes nada, devuelve el nombre y continúa
     const usuarioGuardado = localStorage.getItem('eva_user');
+	this.user= usuarioGuardado;
     if (usuarioGuardado) {
       document.getElementById('display-usuario').innerText = `OPERADOR: ${usuarioGuardado}`;
       return usuarioGuardado;
@@ -179,6 +181,7 @@ class EVASystem {
         if (nombre) {
           // Guardamos la identidad
           localStorage.setItem('eva_user', nombre);
+		  this.user = nombre;
 
           // Animación visual de "Vínculo establecido"
           overlay.style.display = 'none';
@@ -616,6 +619,9 @@ class EVASystem {
     btnIniciar.innerText = "SISTEMA OPERATIVO: ONLINE";
     btnIniciar.style.opacity = "0.6";
     btnIniciar.style.cursor = "default";
+
+    const btPurgar = document.getElementById('btn-purgar');
+    btPurgar.style.display = 'none'; // Ocultamos el botón de purgar datos
 
     const tools = document.getElementById('tools-container');
     tools.style.display = 'block'; // Mostramos las herramientas al iniciar sesión
