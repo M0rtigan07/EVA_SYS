@@ -1129,7 +1129,7 @@ class EVASystem {
     localStorage.setItem('eva_ultima_mision', new Date().toLocaleDateString('es-ES'));
 
     // 3. Sincronización
-    this.guardarDatosEnNube(this.modo, this.estado, pesoFinal, fatigaFinal);
+    this.guardarDatosEnNube(this.routine, this.estado, pesoFinal, fatigaFinal);
     this.actualizarEstadoEVA(false);
 
     this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo.`, "contenta");
@@ -1286,7 +1286,7 @@ class EVASystem {
     const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
     // 1. Datos que vamos a enviar
     const payload = {
-      usuario: nombreUsuario, // El ID único que generaste en el constructor
+      usuario: this.user, // El ID único que generaste en el constructor
       tipo: tipo,           // 'fuerza' o 'cardio'
       modo: modo,           // '3x5' o 'cronometrado'
       fatiga: fatiga,  // El nivel de fatiga
