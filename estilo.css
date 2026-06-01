@@ -26,7 +26,8 @@ body {
     background: rgba(0, 0, 0, 0.98);
     color: var(--blue-tech);
     font-family: 'Courier New', Courier, monospace;
-    display: none; /* Controlado por JS */
+    display: none;
+    /* Controlado por JS */
     /* Asegura el centrado VERTICAL y HORIZONTAL del *contenedor* */
     justify-content: center;
     align-items: center;
@@ -35,30 +36,39 @@ body {
 /* NUEVO: El contenedor central que agrupa los elementos */
 #login-overlay .login-container {
     display: flex;
-    flex-direction: column; /* Apila elementos verticalmente */
+    flex-direction: column;
+    /* Apila elementos verticalmente */
     align-items: center;
-    gap: 15px; /* Espaciado entre elementos */
+    gap: 15px;
+    /* Espaciado entre elementos */
     padding: 30px;
-    border: 1px solid var(--blue-tech); /* Borde sutil del diálogo */
-    background: #000; /* Fondo negro puro para separarlo del overlay */
+    border: 1px solid var(--blue-tech);
+    /* Borde sutil del diálogo */
+    background: #000;
+    /* Fondo negro puro para separarlo del overlay */
     border-radius: 4px;
-    box-shadow: 0 0 20px rgba(5, 1, 41, 0.2); /* Brillo verde sutil */
+    box-shadow: 0 0 20px rgba(5, 1, 41, 0.2);
+    /* Brillo verde sutil */
 }
 
 /* NUEVO: Estilo del título */
 .login-title {
-    margin: 0 0 10px 0; /* Espaciado inferior */
+    margin: 0 0 10px 0;
+    /* Espaciado inferior */
     font-size: 1.2rem;
     color: var(--blue-tech);
     text-transform: uppercase;
     font-weight: normal;
-    text-shadow: 0 0 5px var(--blue-tech); /* Brillo terminal */
+    text-shadow: 0 0 5px var(--blue-tech);
+    /* Brillo terminal */
 }
 
 /* Estilo actualizado del Input (se veía bien, pero lo refinamos) */
 #login-overlay input {
-    width: 250px; /* Ancho específico */
-    max-width: 80%; /* Capa para móviles */
+    width: 250px;
+    /* Ancho específico */
+    max-width: 80%;
+    /* Capa para móviles */
     background: #111;
     border: 1px solid var(--blue-tech);
     color: var(--blue-tech);
@@ -71,34 +81,43 @@ body {
 
 /* Estilo para el texto del placeholder */
 #login-overlay input::placeholder {
-    color: rgba(0, 255, 65, 0.6); /* Verde más claro */
+    color: rgba(0, 255, 65, 0.6);
+    /* Verde más claro */
 }
 
 /* NUEVO: Estilo del botón (reemplaza el genérico blanco) */
 #login-overlay button {
-    width: 250px; /* Mismo ancho que el input */
-    max-width: 80%; /* Mismo ancho máximo que el input */
-    background: #111; /* Fondo oscuro */
-    border: 1px solid var(--blue-tech); /* Borde azul */
-    color: var(--blue-tech); /* Texto azul */
+    width: 250px;
+    /* Mismo ancho que el input */
+    max-width: 80%;
+    /* Mismo ancho máximo que el input */
+    background: #111;
+    /* Fondo oscuro */
+    border: 1px solid var(--blue-tech);
+    /* Borde azul */
+    color: var(--blue-tech);
+    /* Texto azul */
     padding: 12px;
     cursor: pointer;
     text-transform: uppercase;
     font-family: 'Courier New', Courier, monospace;
     font-size: 1rem;
     border-radius: 4px;
-    transition: background 0.2s, color 0.2s; /* Efecto suave de hover */
+    transition: background 0.2s, color 0.2s;
+    /* Efecto suave de hover */
 }
 
 /* Opcional: Efecto al pasar el ratón */
 #login-overlay button:hover {
     background: var(--blue-tech);
-    color: #000; /* Texto negro sobre fondo azul */
+    color: #000;
+    /* Texto negro sobre fondo azul */
 }
 
 #login-overlay button:active {
     background: rgba(0, 255, 65, 0.8);
-    transform: translateY(1px); /* Pequeño efecto de pulsación */
+    transform: translateY(1px);
+    /* Pequeño efecto de pulsación */
 }
 
 #input-nombre {
@@ -118,6 +137,48 @@ body {
     max-width: 100%;
 }
 
+#control-peso-manual {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(20, 20, 20, 0.8);
+    border-left: 3px solid #00ffcc;
+    /* Estética EVA */
+    border-radius: 4px;
+}
+
+#input-peso {
+    background: #000;
+    color: #00ffcc;
+    border: 1px solid #333;
+    padding: 8px;
+    font-family: 'Courier New', monospace;
+    width: 120px;
+    outline: none;
+}
+
+#input-peso:focus {
+    border-color: #00ffcc;
+    box-shadow: 0 0 5px #00ffcc;
+}
+
+#btn-guardar-peso {
+    background: #000;
+    color: #00ffcc;
+    border: 1px solid #00ffcc;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.3s;
+}
+
+#btn-guardar-peso:hover {
+    background: #00ffcc;
+    color: #000;
+    box-shadow: 0 0 10px #00ffcc;
+}
+
 .side-panel {
     background: var(--bg-card);
     padding: 10px;
@@ -129,23 +190,27 @@ body {
     /* Control de flujo y adaptabilidad táctil */
     overflow-y: auto;
     height: 100%;
-    box-sizing: border-box; /* Evita que el padding sume tamaño extra y rompa el layout */
+    box-sizing: border-box;
+    /* Evita que el padding sume tamaño extra y rompa el layout */
 }
 
 /* 🦾 DISEÑO EN CARRUSEL TÁCTIL PARA EJERCICIOS DE FUERZA */
 #lista-ejercicios {
     width: 100%;
-    display: none; /* Nace totalmente oculto hasta presionar "Iniciar Entrenamiento" */
+    display: none;
+    /* Nace totalmente oculto hasta presionar "Iniciar Entrenamiento" */
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow: hidden; /* Adiós al scroll molesto en la tablet */
+    overflow: hidden;
+    /* Adiós al scroll molesto en la tablet */
     margin-top: 15px;
 }
 
 /* Estructura de tarjetas individuales por paso */
 .ejercicio-paso {
-    display: none; /* Oculto por defecto, se maneja dinámicamente por JS con .style.display */
+    display: none;
+    /* Oculto por defecto, se maneja dinámicamente por JS con .style.display */
     width: 100%;
     background: rgba(10, 10, 10, 0.85);
     border: 2px solid var(--blue-tech);
@@ -154,18 +219,20 @@ body {
     box-shadow: var(--neon-shadow);
     box-sizing: border-box;
     text-align: center;
-    animation: aparecerTarjeta 0.4s ease-out forwards; /* Transición suave en tablets */
+    animation: aparecerTarjeta 0.4s ease-out forwards;
+    /* Transición suave en tablets */
 }
 
 /* Animación de entrada para las diapositivas de ejercicios */
 @keyframes aparecerTarjeta {
-    from { 
-        opacity: 0; 
-        transform: scale(0.95) translateY(10px); 
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
     }
-    to { 
-        opacity: 1; 
-        transform: scale(1) translateY(0); 
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
     }
 }
 
@@ -211,9 +278,17 @@ body {
 }
 
 @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .avatar-box {
@@ -267,11 +342,12 @@ body {
 }
 
 /* Efecto de brillo/foco al pasar el ratón (o activo) */
-.btn-tech:hover, .btn-tech:focus {
+.btn-tech:hover,
+.btn-tech:focus {
     background: rgba(0, 212, 255, 0.1);
     border-color: var(--blue-tech);
-    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3), 
-                inset 0 0 15px rgba(0, 212, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3),
+        inset 0 0 15px rgba(0, 212, 255, 0.1);
     color: #fff;
 }
 
@@ -303,8 +379,8 @@ body {
 /* Efecto de sobreiluminación en el carrusel de ejercicios */
 .tool-btn:hover {
     border-color: #fff;
-    box-shadow: 0 0 25px rgba(0, 212, 255, 0.6), 
-                0 0 10px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.6),
+        0 0 10px rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
 }
 
@@ -345,8 +421,8 @@ body {
     background: rgba(255, 50, 50, 0.15);
     border-color: var(--hal-red);
     color: #ff9999;
-    box-shadow: 0 0 25px rgba(255, 50, 50, 0.5), 
-                inset 0 0 15px rgba(255, 50, 50, 0.2);
+    box-shadow: 0 0 25px rgba(255, 50, 50, 0.5),
+        inset 0 0 15px rgba(255, 50, 50, 0.2);
     animation: pulseNeon 1.8s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
@@ -355,12 +431,14 @@ body {
         transform: scale(1);
         opacity: 1;
     }
+
     50% {
         transform: scale(1.03);
         border-color: #fff;
-        box-shadow: 0 0 35px rgba(255, 50, 50, 0.8), 
-                    inset 0 0 20px rgba(255, 50, 50, 0.4);
+        box-shadow: 0 0 35px rgba(255, 50, 50, 0.8),
+            inset 0 0 20px rgba(255, 50, 50, 0.4);
     }
+
     100% {
         transform: scale(1);
         opacity: 1;

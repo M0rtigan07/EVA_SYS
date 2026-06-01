@@ -9,14 +9,16 @@ class EVASystem {
     this.initialized = false;
     this.wakeLock = null;
     this.tiempoRestanteAlPausar = 0;
-	this.user = "";
+    this.user = "";
     //  this.ausenciaDetectada = false;
     this.timerReactivacion = null;
     this.segundosParaReactivar = 25; // Ajusta aquí el tiempo que quieras de margen
     this.timerReactivacion = null;
     this.entrenamientoActivo = false; // Importante inicializar esto
     this.db = JSON.parse(localStorage.getItem('eva_db')) || [];
-    this.lastWeight = localStorage.getItem('eva_ultimo_peso') ? parseFloat(localStorage.getItem('eva_ultimo_peso')) : 80;
+    this.peso = 70;
+    this.pesoActual = localStorage.getItem('eva_peso_actual');
+    this.ultimoPeso = localStorage.getItem('eva_ultimo_peso');
     this.estaEnojada = false;
     this.timerInterval = null;
     this.speech = window.speechSynthesis;
@@ -64,7 +66,6 @@ class EVASystem {
     };
 
 
-
     // 3. Ahora que todo existe, asignar los eventos de repetición
     this.bgMusic.onended = () => {
       const tipo = this.entrenamientoActivo ? 'entrenamiento' : 'reposo';
@@ -94,7 +95,7 @@ class EVASystem {
       }
     };
 
-    this.initVoiceRecognition();
+    // this.initVoiceRecognition();
   } // FIN DEL CONSTRUCTOR
 
   // FUNCIONES DE AUTENTICACIÓN Y TOKEN (BÁSICO PARA SIMULAR SESIONES)
@@ -120,7 +121,7 @@ class EVASystem {
   }
 
   // FUNCIONES DE INTERFAZ Y CONTROL PRINCIPALES
- 
+
 
   // Mejora visual al iniciar login
   async iniciarSesion() {
@@ -165,7 +166,7 @@ class EVASystem {
     const overlay = document.getElementById('login-overlay');
     // 1. Si ya existe, no preguntes nada, devuelve el nombre y continúa
     const usuarioGuardado = localStorage.getItem('eva_user');
-	this.user= usuarioGuardado;
+    this.user = usuarioGuardado;
     if (usuarioGuardado) {
       document.getElementById('display-usuario').innerText = `OPERADOR: ${usuarioGuardado}`;
       return usuarioGuardado;
@@ -181,7 +182,7 @@ class EVASystem {
         if (nombre) {
           // Guardamos la identidad
           localStorage.setItem('eva_user', nombre);
-		  this.user = nombre;
+          this.user = nombre;
 
           // Animación visual de "Vínculo establecido"
           overlay.style.display = 'none';
@@ -196,7 +197,7 @@ class EVASystem {
 
 
   // Dentro de tu clase EVASystem
-  
+
 
   // --- MÓDULO DE RACHAS Y DEGRADACIÓN ---
 
@@ -308,206 +309,6 @@ class EVASystem {
     console.log(estaEnojada ? "😡 EVA: Modo ENOJADA" : "😊 EVA: Modo FELIZ");
   }
 
-  // --- MÓDULO VISIÓN ARTIFICIAL (ROSTRO) ---
-
-  /* async iniciarOjosDeEva() {
-    const video = document.getElementById('video-feed');
-    const statusText = document.getElementById('status-text');
-
-    try {
-      // 1. Cargar modelos de detección (solo los necesarios para que pese poco)
-      await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
-
-      // 2. Encender cámara
-      const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-      video.srcObject = stream;
-
-      // 3. Bucle de detección
-      setInterval(async () => {
-        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions());
-
-        if (detections.length > 0) {
-          // HUMANO DETECTADO
-          statusText.innerText = "OPERADOR DETECTADO";
-          statusText.style.color = "#00ff88";
-          if (this.ausenciaDetectada) this.reanudarEntrenamiento();
-        } else {
-          // HUMANO NO DETECTADO
-          statusText.innerText = "ESPERANDO OPERADOR...";
-          statusText.style.color = "var(--hal-red)";
-          if (this.entrenamientoActivo && !this.ausenciaDetectada) this.pausarEntrenamiento();
-        }
-      }, 1500); // Escanea cada 1.5 segundos (perfecto para la batería)
-
-    } catch (e) {
-      console.error("Error en visión:", e);
-      statusText.innerText = "ERROR DE VISIÓN";
-    }
-  } */
-
-  /*
-  
-  pausarEntrenamiento() {
-      if (this.ausenciaDetectada) return;
-      this.ausenciaDetectada = true;
-  
-      // 1. Guardar tiempo y PARAR el intervalo de cardio
-      const display = document.getElementById('timer-display');
-      if (display) {
-          const partes = display.innerText.split(':');
-          this.tiempoRestanteAlPausar = (parseInt(partes[0]) * 60) + parseInt(partes[1]);
-      }
-  
-      if (this.timerInterval) {
-          clearInterval(this.timerInterval);
-          this.timerInterval = null;
-          console.log("⏱️ Cronómetro de cardio CONGELADO");
-      }
-  
-      // 2. Parar Multimedia
-      if (this.bgMusic) this.bgMusic.pause();
-      const v = document.getElementById('eva-display'); // El video de EVA es el que se pausa
-      if (v) v.pause();
-  
-      this.setVideo('regandina');
-      this.hablar("¡Hey! No te veo. Pausando entrenamiento.");
-  }
-  
-  reanudarEntrenamiento() {
-      if (!this.ausenciaDetectada || this.timerReactivacion) return;
-  
-      let cuentaAtras = 5; // Bajamos a 5 para que no sea eterno
-      this.hablar(`Te veo. Retomamos en ${cuentaAtras} segundos. ¡A tu sitio!`);
-  
-      this.timerReactivacion = setInterval(() => {
-          cuentaAtras--;
-          document.getElementById('status-text').innerText = `PREPARATE... ${cuentaAtras}s`;
-  
-          if (cuentaAtras <= 0) {
-              clearInterval(this.timerReactivacion);
-              this.timerReactivacion = null;
-              this.ausenciaDetectada = false;
-  
-              // 1. REANUDAR EL CRONÓMETRO
-              if (this.tiempoRestanteAlPausar > 0) {
-                  this.iniciarCronometro(this.tiempoRestanteAlPausar);
-              }
-  
-              // 2. REANUDAR MULTIMEDIA
-              if (this.bgMusic) this.bgMusic.play();
-              const v = document.getElementById('eva-display');
-              if (v) v.play();
-              
-              this.setVideo('contenta');
-              this.hablar("¡Dale caña!");
-              document.getElementById('status-text').innerText = "SISTEMA ACTIVO";
-          }
-      }, 1000);
-  }
-  
-  */
-
-
-  // 2. RECONOCIMIENTO DE VOZ ACTUALIZADO (Con ambas memorias)
-  initVoiceRecognition() {
-    const SpeechRoute = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRoute) return;
-
-    this.recognition = new SpeechRoute();
-    this.recognition.continuous = false;
-    this.recognition.lang = 'es-ES';
-
-    this.recognition.onstart = () => {
-      this.listening = true;
-      if (this.bgMusic) this.bgMusic.volume = 0.05;
-    };
-
-    this.recognition.onresult = (e) => {
-      const cmd = e.results[e.results.length - 1][0].transcript.toLowerCase();
-
-      // Lógica de Peso Corregida
-      if (cmd.includes("peso") || cmd.includes("pesando")) {
-        const num = cmd.match(/\d+/);
-        if (num) {
-          const nuevoPeso = parseFloat(num[0]);
-
-          // 1. OBTENER PESO ANTERIOR CORRECTAMENTE
-          const pesoAnterior = parseFloat(localStorage.getItem('eva_ultimo_peso') || 0);
-
-          // 2. COMPARACIÓN ANTES DE GUARDAR
-          if (pesoAnterior !== 0 && nuevoPeso > pesoAnterior) {
-            this.actualizarEstadoEVA(true); // Se pone roja y enfadada
-            this.hablar(`¿${nuevoPeso} kilos? Has subido. ¡A entrenar ahora mismo!`, 'regandina');
-          } else {
-            this.actualizarEstadoEVA(false); // Se pone verde y feliz
-            this.hablar(`Peso actualizado a ${nuevoPeso}. Buen control.`);
-          }
-
-          // 3. ACTUALIZAR LOCAL Y NUBE
-          this.lastWeight = nuevoPeso;
-          localStorage.setItem('eva_ultimo_peso', nuevoPeso);
-          document.getElementById('input-peso').value = nuevoPeso;
-
-          // Enviamos con el humor actualizado según la lógica anterior
-          //  this.guardarDatosEnNube(nuevoPeso, null);
-        }
-      }
-
-      if (cmd.includes("activar ojos") || cmd.includes("activar visión")) {
-        this.hablar("Activando sensores visuales. Ahora te tengo vigilado, operador.");
-        this.iniciarOjosDeEva();
-      }
-
-      // Lógica de Fatiga
-      if (cmd.includes("fatiga") || cmd.includes("nivel")) {
-        const num = parseInt(cmd.match(/\d+/));
-        if (num >= 1 && num <= 8) {
-          document.getElementById('val-fatiga').innerText = num;
-          this.hablar(`Nivel ${num} registrado.`);
-          this.guardarDatosEnNube(null, num); // Guardar en nube
-        }
-      }
-    };
-
-    this.recognition.onend = () => {
-
-      this.listening = false;
-      const btn = document.getElementById('btn-micro');
-      const txt = document.getElementById('micro-text');
-
-      // Restauramos aspecto original
-      btn.style.background = "transparent";
-      btn.style.boxShadow = "none";
-      txt.innerText = "HABLAR CON EVA";
-
-      if (this.bgMusic) this.bgMusic.volume = 0.4;
-      console.log("🎤 Micrófono cerrado.");
-    };
-
-  }
-
-  toggleMicrofono() {
-    const btn = document.getElementById('btn-micro');
-    const txt = document.getElementById('micro-text');
-
-    if (this.listening) {
-      this.recognition.stop();
-      // El estado se actualiza en onend
-    } else {
-      try {
-        this.recognition.start();
-        this.listening = true;
-        btn.style.background = "rgba(0, 212, 255, 0.2)";
-        btn.style.boxShadow = "0 0 20px rgba(0, 212, 255, 0.4)";
-        txt.innerText = "ESCUCHANDO...";
-      } catch (e) {
-        console.error("Error al iniciar micro:", e);
-      }
-    }
-  }
-
-
-
 
   hablar(texto, tipo = "habla") {
     if (this.recognition) this.recognition.stop();
@@ -612,7 +413,19 @@ class EVASystem {
     return false;
   }
 
+
+
+
+
   async init() {
+
+    if (this.estaEnojada == true) {
+      this.actualizarEstadoEVA(true);
+      this.hablar("SISTEMAS REINICIADOS. SIGO ENFADADA, ¡A ENTRENAR!", 'regandina');
+    } else {
+      this.actualizarEstadoEVA(false);
+      //  this.hablar("Sistemas en línea. Bienvenido + " + this.user + ". ¿Listo para entrenar?");
+    }
 
     const btnIniciar = document.getElementById('btn-iniciar');
     btnIniciar.disabled = true;
@@ -620,13 +433,65 @@ class EVASystem {
     btnIniciar.style.opacity = "0.6";
     btnIniciar.style.cursor = "default";
 
-   
 
-    
-    
+    const controlPeso = document.getElementById('control-peso-manual');
+    controlPeso.style.display = 'block';
+
+    // 2. Actualizamos la interfaz (esto hace que veas el cambio en pantalla)
+    const display = document.getElementById('display-peso');
+    if (display) {
+      display.innerText = `PESO: ${this.peso} kg`;
+    }
+
+    const infoPeso = document.getElementById('display-peso-kg');
+
+    const pesoTxt = localStorage.getItem('eva_ultimo_peso') || "0";
+
+    infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
 
 
-   
+    // En tu método de inicialización o donde configuras el evento
+    document.getElementById('btn-guardar-peso').addEventListener('click', () => {
+
+      const input = document.getElementById('input-peso');
+      const valorInput = input.value;
+
+      if (!isNaN(valorInput)) {
+        // 1. Actualizamos la propiedad de la clase con el nuevo valor
+        this.peso = valorInput;
+
+        // 2. Actualizamos la interfaz (esto hace que veas el cambio en pantalla)
+        const display = document.getElementById('display-peso');
+        if (display) {
+          display.innerText = `PESO: ${this.peso} kg`;
+        }
+
+        // 3. Guardamos en localStorage para que no se pierda al refrescar
+        localStorage.setItem('eva_peso_usuario', this.peso.toString());
+
+        // 4. Disparamos la lógica de comparación
+        this.updateLogic();
+
+        console.log("EVA: Peso actualizado correctamente a", this.peso);
+      } else {
+        console.error("EVA: El valor introducido no es un número entero válido.");
+      }
+
+    });
+
+    //FIN DE INIT()
+
+    /*  document.getElementById('btn-guardar-peso').addEventListener('click', () => {
+       this.pesoActual = document.getElementById('input-peso').value;
+       this.procesarPesoManual(this.pesoActual);
+       console.log("Peso manual guardado:", this.pesoActual);
+     
+     }); */
+
+
+
+
+
     // 1. Lo primero: ¿Ya entreno hoy?
     const bloqueado = this.checkBloqueoDiario();
 
@@ -666,7 +531,7 @@ class EVASystem {
 
       // EVA te informa y se calla
       setTimeout(() => {
-        this.hablar("Entrenamiento diario completado. Los datos están sincronizados. Ha  Descansar.");
+        this.hablar("Entrenamiento diario completado. Los datos están sincronizados. Ha  Descansar " + this.user + ".");
       }, 1000);
 
       return; // DETENEMOS EL INICIO: No activamos voz ni sensores
@@ -680,16 +545,30 @@ class EVASystem {
     this.initialized = true;
 
     // 3. CARGA DE DATOS LOCALES
-    this.lastWeight = parseFloat(localStorage.getItem('eva_ultimo_peso')) || 70;
+    this.lastWeight = parseFloat(localStorage.getItem('eva_ultimo_peso'));
     this.streak = parseInt(localStorage.getItem('eva_streak')) || 0;
     // El humor ahora depende de nuestra función maestra
     this.estaEnojada = (localStorage.getItem('eva_enojada') === 'true');
     this.lastTrainingDate = localStorage.getItem('eva_last_date');
 
+
+
     this.verificarDegradacionRacha();
-  
+
     // 4. SINCRONIZACIÓN DE INTERFAZ
-    document.getElementById('input-peso').value = this.lastWeight;
+    //   document.getElementById('input-peso').value = this.lastWeight;
+
+    const controlP = document.getElementById('control-peso-manual');
+    controlP.style.display = 'block';
+    controlP.style.animation = 'fadeIn 2s';
+    controlP.onclick = () => {
+      console.log("Peso manual actualizado a:", this.lastWeight);
+
+    };
+
+
+
+
     document.getElementById('display-racha').innerText = `${this.streak} DÍAS`;
 
     // Cambiamos el aspecto visual del botón de inicio
@@ -717,18 +596,18 @@ class EVASystem {
     } else if (this.estaEnojada) {
       this.actualizarEstadoEVA(true); // Se pone roja
       this.setVideo('reposo_enojada');
-      this.hablar("SISTEMAS REINICIADOS. SIGO ENFADADA, ¡A ENTRENAR!", 'regandina');
+      this.hablar("SISTEMAS REINICIADOS. SIGO ENFADADA  " + this.user + ", ¡A ENTRENAR!", 'regandina');
     } else {
       this.actualizarEstadoEVA(false); // Se pone verde
       this.setVideo('reposo');
-      this.hablar("Sistemas en línea. Bienvenido. ¿Listo para entrenar?");
+      this.hablar("Sistemas en línea. Bienvenido. ¿Listo para entrenar " + this.user + "?");
       this.playMusic("reposo");
     }
 
 
     // 6. ACTIVACIÓN DE SENSORES (Solo si no estaba bloqueado arriba)
     this.solicitarWakeLock();
-    this.initVoiceRecognition();
+    //  this.initVoiceRecognition();
   }
 
 
@@ -773,6 +652,9 @@ class EVASystem {
     this.entrenamientoActivo = true
     document.getElementById('btn-start-cardio').style.display = "none";
     document.getElementById('btn-pause-cardio').style.display = "block"; // Mostrar pausa
+
+    document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
+
 
     // FORZAMOS LA LECTURA FRESCA DEL DATO
     this.streak = this.obtenerRachaActualizada();
@@ -927,6 +809,9 @@ class EVASystem {
   iniciarProtocoloFuerza() {
     this.entrenamientoActivo = true;
     this.currentMusicVolume = 0.4;
+
+    document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
+
 
     // --- AQUÍ APLICAMOS LA PROGRESIÓN ---
     this.streak = this.obtenerRachaActualizada(); // Aseguramos dato fresco
@@ -1130,7 +1015,7 @@ class EVASystem {
     localStorage.setItem('eva_ultima_mision', new Date().toLocaleDateString('es-ES'));
 
     // 3. Sincronización
-    this.guardarDatosEnNube(this.routine, this.estado,fatigaFinal, pesoFinal);
+    this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.peso);
     this.actualizarEstadoEVA(false);
 
     this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo.`, "contenta");
@@ -1142,7 +1027,7 @@ class EVASystem {
   }
 
   saveToDB() {
-    const pesoActual = document.getElementById('input-peso').value;
+    const pesoActual = this.peso;
     const fatigaActual = parseInt(document.getElementById('val-fatiga').innerText);
     const hoy = new Date();
 
@@ -1233,9 +1118,35 @@ class EVASystem {
   }
 
 
+
+
   updateLogic() {
-    const peso = parseFloat(this.lastWeight);
-    const agua = (peso * 0.035).toFixed(1);
+
+    const pesoActual = this.peso; // Ahora esto viene del valor que guardaste
+    console.log("Comparando peso actual:", pesoActual, "con peso anterior:", this.ultimoPeso);
+    const pesoAnterior = parseInt(localStorage.getItem('eva_ultimo_peso_anterior')) || 80;
+
+    const diferencia = pesoActual - pesoAnterior;
+    console.log("Diferencia de peso:", diferencia);
+
+    if (pesoActual > pesoAnterior) {
+      this.actualizarEstadoEVA(true);
+      localStorage.setItem('eva_enojada', 'true');
+      this.hablar("¡Peso registrado mayor que el último! has engordado " + diferencia + " kilos. Esto no es bueno para tu progreso. ¡A ENTRENAR MÁS DURO!", 'regandina');
+    }
+
+    if (pesoActual < pesoAnterior) {
+      this.actualizarEstadoEVA(false);
+      localStorage.setItem('eva_enojada', 'false');
+      this.hablar("¡Peso registrado menor que el último!  has adelgazado " + diferencia + " kilos. Excelente progreso. ¡Sigue así!", 'contenta');
+    }
+
+    // Guardar el peso actual como el "anterior" para la próxima comparación
+    localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
+
+
+
+    const agua = (this.peso * 0.035).toFixed(1);
     const details = document.getElementById('details-box');
     if (this.routine === "CARDIO") {
       const sesiones = this.db.filter(s => s.rutina === "CARDIO").length;
@@ -1332,24 +1243,24 @@ class EVASystem {
     this.hablar("Sincronizando historial desde la nube. Esto asegura que tu progreso esté actualizado incluso sin conexión.");
 
     try {
-        const respuesta = await fetch(`/api/historial?usuario=${encodeURIComponent(usuario)}`);
-        const datosNube = await respuesta.json();
+      const respuesta = await fetch(`/api/historial?usuario=${encodeURIComponent(usuario)}`);
+      const datosNube = await respuesta.json();
 
-        if (respuesta.ok) {
-            // Guardamos el historial completo en un objeto local de la app
-            // para que EVA pueda consultarlo sin internet
-            localStorage.setItem('eva_historial_local', JSON.stringify(datosNube));
-            console.log("EVA: Historial sincronizado con éxito. Registros:", datosNube.length);
-            this.hablar("Sincronización completa. Historial actualizado con los datos más recientes de la nube.");
-        } else {
-            console.error("EVA: Error al descargar datos:", datosNube.error);
-              this.hablar("No se pudo sincronizar con la nube. Usando datos locales existentes.");
-        }
+      if (respuesta.ok) {
+        // Guardamos el historial completo en un objeto local de la app
+        // para que EVA pueda consultarlo sin internet
+        localStorage.setItem('eva_historial_local', JSON.stringify(datosNube));
+        console.log("EVA: Historial sincronizado con éxito. Registros:", datosNube.length);
+        this.hablar("Sincronización completa. Historial actualizado con los datos más recientes de la nube.");
+      } else {
+        console.error("EVA: Error al descargar datos:", datosNube.error);
+        this.hablar("No se pudo sincronizar con la nube. Usando datos locales existentes.");
+      }
     } catch (error) {
-        console.warn("EVA: No se pudo conectar a la nube. Usando datos locales existentes.");
-          this.hablar("No se pudo conectar a la nube. Usando datos locales existentes.");
+      console.warn("EVA: No se pudo conectar a la nube. Usando datos locales existentes.");
+      this.hablar("No se pudo conectar a la nube. Usando datos locales existentes.");
     }
-}
+  }
 
 
   prepararBorrado() {
@@ -1413,24 +1324,24 @@ class EVASystem {
 
   /* async importarDatosDesdeNube() {
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxeYcQAHGoDzXD88RgbKX8nzpWWUjxvB1uKRVSH44i_f9nqCC8S4uc9yAfPLWlIFE2d/exec";
-
+  
     this.hablar("Sincronizando base de datos local con el registro en la nube.");
-
+  
     try {
       const response = await fetch(URL_SCRIPT);
       const data = await response.json();
-
+  
       if (data && data.fecha) {
         const hoy = this.getFechaHoy();
-
+  
         // --- NORMALIZADOR DE FECHA DE NUBE ---
         // Convertimos el ISO (2026-04-29...) a un objeto fecha de JS
         const fechaObjeto = new Date(data.fecha);
-
+  
         const fechaNubeNormalizada = `${fechaObjeto.getDate()}/${fechaObjeto.getMonth() + 1}/${fechaObjeto.getFullYear()}`;
-
+  
         console.log(`Comparación Normalizada -> Nube: "${fechaNubeNormalizada}" | Local: "${hoy}"`);
-
+  
         if (fechaNubeNormalizada === hoy) {
           console.log("¡Coincidencia detectada! Bloqueando sistema...");
           this.misionCumplida = true;
@@ -1439,7 +1350,7 @@ class EVASystem {
           this.hablar("He confirmado con la nube que tu entrenamiento de hoy está registrado. Descansa.");
           return;
         }
-
+  
         // 1. Sincronizamos la memoria interna (Array y Variables)
         const registroSincronizado = {
           fecha: data.fecha,
@@ -1449,19 +1360,19 @@ class EVASystem {
           racha: parseInt(data.racha) || this.streak,
           humor: false
         };
-
+  
         this.db.push(registroSincronizado);
         this.lastWeight = registroSincronizado.peso;
         this.streak = registroSincronizado.racha;
-
+  
         // 2. Persistencia en LocalStorage
         localStorage.setItem('eva_db', JSON.stringify(this.db));
         localStorage.setItem('eva_ultimo_peso', this.lastWeight);
         localStorage.setItem('eva_streak', this.streak);
-
+  
         // 3. ¿LA FECHA IMPORTADA ES HOY? -> ACTIVAR PROTOCOLO FINAL
-
-
+  
+  
         // 4. Si la fecha no es hoy, solo actualizamos datos normales
         this.renderRachaUI();
         document.getElementById('input-peso').value = this.lastWeight;
@@ -1648,16 +1559,39 @@ EVA.iniciarSesion = async function () {
   this.iniciarEntrenamiento();
 };
 
+
+// En tu método de inicialización o donde configuras el evento
+document.getElementById('btn-guardar-peso').addEventListener('click', () => {
+  const input = document.getElementById('input-peso-manual');
+  const nuevoPeso = parseInt(input.value, 10);
+
+  if (!isNaN(nuevoPeso)) {
+    // 1. Actualizar memoria interna
+    this.lastWeight = nuevoPeso;
+
+    // 2. Persistir en localStorage
+    localStorage.setItem('eva_ultimo_peso', nuevoPeso.toString());
+
+    // 3. Ejecutar la lógica de reacción
+    this.updateLogic();
+
+    console.log("Peso actualizado a:", this.lastWeight);
+  }
+});
+
+
+
 // Carga inicial al abrir la app
 document.addEventListener('DOMContentLoaded', () => {
 
   const btnIniciar = document.getElementById('btn-iniciar');
-    if (btnIniciar) {
-        btnIniciar.addEventListener('click', () => {
-            EVA.iniciarSesion();  // Llama a tu método aquí
-        });
-    }
- // EVA.animarBienvenida();
+  if (btnIniciar) {
+    btnIniciar.addEventListener('click', () => {
+      EVA.iniciarSesion();  // Llama a tu método aquí
+    });
+  }
+
+
 
   // Verificar si ya hay una sesión activa
   const tokenGuardado = localStorage.getItem('eva_session');

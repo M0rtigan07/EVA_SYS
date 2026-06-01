@@ -17,7 +17,7 @@ export default async function handler(req, res) {
         tipo TEXT,
         modo TEXT,
         fatiga INTEGER,
-        peso REAL,
+        peso INTEGER,
         fecha TEXT
       )
     `);
