@@ -1130,7 +1130,7 @@ class EVASystem {
     localStorage.setItem('eva_ultima_mision', new Date().toLocaleDateString('es-ES'));
 
     // 3. Sincronización
-    this.guardarDatosEnNube(this.routine, this.estado, pesoFinal, fatigaFinal);
+    this.guardarDatosEnNube(this.routine, this.estado,fatigaFinal, pesoFinal);
     this.actualizarEstadoEVA(false);
 
     this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo.`, "contenta");
