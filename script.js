@@ -427,6 +427,12 @@ class EVASystem {
 
     console.log("Iniciando EVA...");
 
+    // Dentro de EVASystem, en el init
+    window.addEventListener('online', () => {
+      this.hablar("Conexión restaurada, sincronizando entrenamientos...");
+      this.sincronizarConTurso();
+    });
+
 
     const backup = document.getElementById('backup').style.display = 'none';
 
@@ -1021,7 +1027,7 @@ class EVASystem {
     localStorage.setItem('eva_streak', this.streak);
 
     const hoy = new Date().toISOString().split('T')[0]; // Ejemplo: "2026-06-03"
-    localStorage.setItem('eva_ultima_fecha_entreno', hoy);
+    localStorage.setItem('eva_last_date', hoy);
 
     // 3. Sincronización
     this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.peso);
@@ -1244,11 +1250,49 @@ class EVASystem {
         this.hablar("No se pudo sincronizar con la nube. Los datos están seguros en local.");
       }
     } catch (error) {
-      // Esto captura fallos de red (ej: usuario sin internet)
-      console.warn("EVA: Sin conexión a la base de datos externa. Los datos están seguros en local.");
-      this.hablar("No se pudo conectar a la nube. Los datos están seguros en local.");
+      // AQUÍ ESTÁ LA ADAPTACIÓN: Si falla, lo metemos en el JSON de cola
+      console.warn("EVA: Sin conexión. Guardando en cola local...");
+
+      let cola = JSON.parse(localStorage.getItem('eva_offline_queue') || '[]');
+      cola.push(payload);
+      localStorage.setItem('eva_offline_queue', JSON.stringify(cola));
+
+      this.hablar("Sin conexión. Datos guardados en cola para subir más tarde.");
+
+    }
+
+  }
+
+
+  async sincronizarConTurso() {
+    // Si no hay red, abortamos para no bloquear la app
+    if (!navigator.onLine) return;
+
+    let cola = JSON.parse(localStorage.getItem('eva_offline_queue') || '[]');
+    if (cola.length === 0) return;
+
+    console.log(`Sincronizando ${cola.length} entrenamientos...`);
+
+    // Intentamos subir el primero de la cola
+    try {
+      const respuesta = await fetch('/api/guardar', {
+        method: 'POST',
+        body: JSON.stringify(cola[0])
+      });
+
+      if (respuesta.ok) {
+        cola.shift(); // Quitamos el que ya subió
+        localStorage.setItem('eva_offline_queue', JSON.stringify(cola));
+        // Recursividad: llamamos de nuevo para subir el siguiente
+        await this.sincronizarConTurso();
+      }
+    } catch (e) {
+      console.error("Error de red, reintentaremos luego:", e);
     }
   }
+
+
+
 
   async sincronizarDesdeNube() {
     const usuario = localStorage.getItem('eva_user');
