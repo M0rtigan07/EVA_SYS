@@ -137,17 +137,20 @@ class EVASystem {
 
       // Generamos la llave y guardamos todo de una vez
       const nuevoSecretId = crypto.randomUUID();
-      // Llamamos a tu backend para guardar
+      // 2. Llamamos al backend para registrar todo de una vez
       await fetch('/api/auth', {
         method: 'POST',
-        body: JSON.stringify({ accion: 'registrar', nombre, eva_secret_id: nuevoSecretId }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accion: 'registrar',
+          nombre: nombre,
+          eva_secret_id: nuevoSecretId
+        })
       });
 
+      // 3. Guardamos localmente
       localStorage.setItem('eva_secret_id', nuevoSecretId);
 
-
-      // Guardamos en Turso (Nombre + Llave)
-      await this.guardarUsuarioEnNube(nombre, nuevoSecretId);
 
       // Descargamos el backup (tu llave maestra)
       const blob = new Blob([nuevoSecretId], { type: 'text/plain' });
@@ -175,6 +178,8 @@ class EVASystem {
       }
     }
   }
+
+
 
   // 1. Método para solicitar login
 
