@@ -9,7 +9,7 @@ class EVASystem {
     this.initialized = false;
     this.wakeLock = null;
     this.tiempoRestanteAlPausar = 0;
-    this.user = "";
+    this.user = localStorage.getItem('eva_user');
     //  this.ausenciaDetectada = false;
     this.timerReactivacion = null;
     this.segundosParaReactivar = 25; // Ajusta aquí el tiempo que quieras de margen
