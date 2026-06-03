@@ -649,14 +649,13 @@ class EVASystem {
     btn.style.borderColor = "#00ff88";
     btn.style.color = "#00ff88";
 
-    if (this.estaEnojada) {
-      this.setVideo("reposo_enojada");
-      this.playMusic("reposo_enojada", 0.2);
-    } else {
-
-      this.setVideo("contenta");
-      this.playMusic("reposo", 0.2);
+    if (this.estaEnojada===true) {
+      this.actualizarEstadoEVA(true); // Se pone roja
+    }else{
+      this.actualizarEstadoEVA(false); // Se pone verde
     }
+     
+   
   }
 
   // Método para asegurar que la racha está al día antes de usarla
@@ -1256,12 +1255,15 @@ class EVASystem {
 
       if (respuesta.ok) {
         console.log("EVA: Datos registrados en la nube con éxito.");
+        this.hablar("Datos sincronizados con la nube.");
       } else {
         console.error("EVA: Error al guardar en la nube (Status: " + respuesta.status + ")");
+        this.hablar("No se pudo sincronizar con la nube. Los datos están seguros en local.");
       }
     } catch (error) {
       // Esto captura fallos de red (ej: usuario sin internet)
       console.warn("EVA: Sin conexión a la base de datos externa. Los datos están seguros en local.");
+      this.hablar("No se pudo conectar a la nube. Los datos están seguros en local.");
     }
   }
 
