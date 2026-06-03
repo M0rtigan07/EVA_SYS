@@ -9,7 +9,7 @@ class EVASystem {
     this.initialized = false;
     this.wakeLock = null;
     this.tiempoRestanteAlPausar = 0;
-    this.user = localStorage.getItem('eva_user');
+    this.user = "";
     //  this.ausenciaDetectada = false;
     this.timerReactivacion = null;
     this.segundosParaReactivar = 25; // Ajusta aquí el tiempo que quieras de margen
@@ -134,7 +134,7 @@ class EVASystem {
       this.hablar("POR FAVOR, INTRODUCE TU NOMBRE DE USUARIO PARA REGISTRARTE.");
       const nombre = prompt("EVA: Sistema Introduce tu nombre de usuario:");
       if (!nombre) return; // Si cancela, no hacemos nada
-     // nombre = this.user;
+      // nombre = this.user;
       // Generamos la llave y guardamos todo de una vez
       const nuevoSecretId = crypto.randomUUID();
 
@@ -450,7 +450,11 @@ class EVASystem {
 
     console.log("Iniciando EVA...");
 
+    this.user = localStorage.getItem('eva_user');
+    console.log("Usuario detectado:", this.user);
 
+    localStorage.setItem('eva_peso_usuario', this.peso);
+    console.log("Peso inicial establecido en:", this.peso, "kg");
 
     const btnIniciar = document.getElementById('btn-iniciar');
     btnIniciar.disabled = true;
@@ -601,7 +605,7 @@ class EVASystem {
 
     if (bloqueoRecuperacion) {
       this.setVideo('reposo');
-      this.hablar("Sistemas en pausa. necesutas descansar " + this.user + ".");
+      this.hablar("Sistemas en pausa. necesitas descansar " + this.user + ".");
       this.playMusic('reposo', 0.2);
     } else if (this.routine === "DESCANSO") {
       this.setVideo('reposo');
@@ -645,8 +649,14 @@ class EVASystem {
     btn.style.borderColor = "#00ff88";
     btn.style.color = "#00ff88";
 
-    this.setVideo("contenta");
-    this.playMusic("reposo", 0.2);
+    if (this.estaEnojada) {
+      this.setVideo("reposo_enojada");
+      this.playMusic("reposo_enojada", 0.2);
+    } else {
+
+      this.setVideo("contenta");
+      this.playMusic("reposo", 0.2);
+    }
   }
 
   // Método para asegurar que la racha está al día antes de usarla
@@ -1213,7 +1223,7 @@ class EVASystem {
 * Se ejecuta en segundo plano sin bloquear la interfaz.
 */
   async guardarDatosEnNube(tipo, modo, fatiga, peso) {
-    const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
+  //const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
     // 1. Datos que vamos a enviar
     const payload = {
       usuario: this.user, // El ID único que generaste en el constructor
