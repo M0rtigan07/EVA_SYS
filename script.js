@@ -124,49 +124,81 @@ class EVASystem {
 
 
   // Mejora visual al iniciar login
+
   async iniciarSesion() {
+
     const btn = document.getElementById('btn-iniciar');
     console.log("Iniciando sesión...");
+
     const llaveLocal = localStorage.getItem('eva_secret_id');
 
-    // CASO 1: No hay llave (Usuario nuevo)
     if (!llaveLocal) {
-      this.hablar("POR FAVOR, INTRODUCE TU NOMBRE DE USUARIO PARA REGISTRARTE.");
-      const nombre = prompt("EVA: Sistema Introduce tu nombre de usuario:");
-      if (!nombre) return; // Si cancela, no hacemos nada
-      // nombre = this.user;
-      // Generamos la llave y guardamos todo de una vez
-      const nuevoSecretId = crypto.randomUUID();
+      this.hablar("POR FAVOR, INTRODUCE TU NOMBRE DE USUARIO.");
+      const nombre = prompt("EVA: Introduce tu nombre:");
+      if (!nombre) return;
 
-      localStorage.setItem('eva_user', nombre);
+      // NUEVO: Intentamos obtener el ID real de la nube primero
+      const respuesta = await fetch(`/api/auth?nombre=${nombre}`); // Necesitas añadir esta lógica en GET
+      const data = await respuesta.json();
 
-      // 2. Llamamos al backend para registrar todo de una vez
-      await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accion: 'registrar',
-          nombre: nombre,
-          eva_secret_id: nuevoSecretId
-        })
-      });
+      if (data.id_encontrado) {
+        //  alert("Usuario ya registrado. Por favor, carga tu archivo de backup para obtener tu ID original.");
+        this.hablar("Usuario ya registrado. Por favor, carga tu archivo de backup para obtener tu ID original.");
 
-      // 3. Guardamos localmente
-      localStorage.setItem('eva_secret_id', nuevoSecretId);
+        // 1. Pedimos el archivo al usuario
+        const inputArchivo = document.createElement('input');
+        inputArchivo.type = 'file';
+        inputArchivo.onchange = async (e) => {
+          const file = e.target.files[0];
+          const contenido = await file.text(); // El archivo contiene el eva_secret_id
+
+          // 2. Enviamos el ID del archivo a comprobar contra la base de datos
+          const res = await fetch(`/api/auth?nombre=${nombre}&eva_secret_id=${contenido.trim()}`);
+          const validacion = await res.json();
+
+          if (validacion.autorizado) {
+            localStorage.setItem('eva_secret_id', contenido.trim());
+            location.reload(); // Recarga y entra a la app
+          } else {
+            alert("Llave incorrecta. Acceso denegado.");
+          }
+        };
+        inputArchivo.click();
 
 
-      // Descargamos el backup (tu llave maestra)
-      const blob = new Blob([nuevoSecretId], { type: 'text/plain' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'eva_backup.txt';
-      link.click();
+      } else {
+        // Solo si NO existe, generamos uno nuevo y registramos
+        const nuevoSecretId = crypto.randomUUID();
+        // ... (tu lógica de registro aquí) ...
+        localStorage.setItem('eva_user', nombre);
 
-      console.log("EVA: Usuario registrado y llave generada.");
-      this.init(); // Arrancamos la app
-    }
-    // CASO 2: Ya existe llave (Usuario vuelve)
-    else {
+        // 2. Llamamos al backend para registrar todo de una vez
+        await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accion: 'registrar',
+            nombre: nombre,
+            eva_secret_id: nuevoSecretId
+          })
+        });
+
+        // 3. Guardamos localmente
+        localStorage.setItem('eva_secret_id', nuevoSecretId);
+
+        // Descargamos el backup (tu llave maestra)
+        const blob = new Blob([nuevoSecretId], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'eva_backup.txt';
+        link.click();
+
+        console.log("EVA: Usuario registrado y llave generada.");
+        this.init(); // Arrancamos la app
+
+      }
+    } else {
+      // ... (tu lógica de validación aquí) ...
       // --- VALIDACIÓN ---
       const respuesta = await fetch(`/api/auth?eva_secret_id=${llaveLocal}`);
       const data = await respuesta.json();
@@ -181,8 +213,6 @@ class EVASystem {
       }
     }
   }
-
-
 
   // 1. Método para solicitar login
 
@@ -649,13 +679,13 @@ class EVASystem {
     btn.style.borderColor = "#00ff88";
     btn.style.color = "#00ff88";
 
-    if (this.estaEnojada===true) {
+    if (this.estaEnojada === true) {
       this.actualizarEstadoEVA(true); // Se pone roja
-    }else{
+    } else {
       this.actualizarEstadoEVA(false); // Se pone verde
     }
-     
-   
+
+
   }
 
   // Método para asegurar que la racha está al día antes de usarla
@@ -1031,7 +1061,7 @@ class EVASystem {
     if (this.streak > 0 && this.streak % 7 === 0) {
       this.ejecutarCelebracionSemanal();
     } else {
-      this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo.`, "contenta");
+      this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`, this.estaEnojada ? 'regandina' : 'mision_ok');
     }
 
     // 2. Marcamos como completada ANTES de enviar para bloquear re-intentos
@@ -1222,7 +1252,7 @@ class EVASystem {
 * Se ejecuta en segundo plano sin bloquear la interfaz.
 */
   async guardarDatosEnNube(tipo, modo, fatiga, peso) {
-  //const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
+    //const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
     // 1. Datos que vamos a enviar
     const payload = {
       usuario: this.user, // El ID único que generaste en el constructor
