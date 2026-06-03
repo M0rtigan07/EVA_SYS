@@ -6,13 +6,13 @@ const db = createClient({
 });
 
 
-await db.execute(`
+/* await db.execute(`
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT,
         eva_secret_id TEXT UNIQUE
     )
-`);
+`); */
 
 
 export default async function handler(req, res) {
