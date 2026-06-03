@@ -134,7 +134,7 @@ class EVASystem {
       this.hablar("POR FAVOR, INTRODUCE TU NOMBRE DE USUARIO PARA REGISTRARTE.");
       const nombre = prompt("EVA: Sistema Introduce tu nombre de usuario:");
       if (!nombre) return; // Si cancela, no hacemos nada
-
+      nombre = this.user;
       // Generamos la llave y guardamos todo de una vez
       const nuevoSecretId = crypto.randomUUID();
       // 2. Llamamos al backend para registrar todo de una vez
@@ -169,7 +169,7 @@ class EVASystem {
       const data = await respuesta.json();
 
       if (data.autorizado) {
-        nombre = this.user;
+
         this.init();
       } else {
         alert("Acceso denegado: Llave no reconocida.");
