@@ -109,17 +109,7 @@ class EVASystem {
     return btoa(JSON.stringify(payload));
   }
 
-  /* validarToken(token) {
-   try {
-     const payload = JSON.parse(atob(token));
-     // Validar si el token es muy antiguo (ej. > 24 horas)
-     const expira = 24 * 60 * 60 * 1000;
-     return (Date.now() - payload.timestamp) < expira;
-   } catch (e) {
-     return false;
-   } 
- } */
-
+  
   // FUNCIONES DE INTERFAZ Y CONTROL PRINCIPALES
 
 
@@ -218,65 +208,6 @@ class EVASystem {
       }
     }
   }
-
-  // 1. Método para solicitar login
-
-  //primera version
-
-  /*  async solicitarIdentidad() {
-     const overlay = document.getElementById('login-overlay');
-     // 1. Si ya existe, no preguntes nada, devuelve el nombre y continúa
-     const usuarioGuardado = localStorage.getItem('eva_user');
-     this.user = usuarioGuardado;
-     if (usuarioGuardado) {
-       document.getElementById('display-usuario').innerText = `OPERADOR: ${usuarioGuardado}`;
-       return usuarioGuardado;
-     }
- 
-     // 2. Si no existe, activamos la interfaz "Estilo Terminal"
-     return new Promise((resolve) => {
-       const overlay = document.getElementById('login-overlay');
-       overlay.style.display = 'block';
- 
-       document.getElementById('btn-login-confirmar').onclick = () => {
-         const nombre = document.getElementById('input-nombre').value.trim();
-         if (nombre) {
-           // Guardamos la identidad
-           localStorage.setItem('eva_user', nombre);
-           this.user = nombre;
- 
-           // Animación visual de "Vínculo establecido"
-           overlay.style.display = 'none';
-           document.getElementById('btn-info-usuario').innerText = `OPERADOR: ${nombre}`;
- 
-           resolve(nombre); // EVA continúa su flujo
-           this.init();
-         }
-       };
-     });
-   } */
-
-  async verificarSiEntrenoHoy() {
-    const usuario = localStorage.getItem('eva_user');
-    if (!usuario) return;
-
-    try {
-      const res = await fetch(`/api/check-hoy?usuario=${usuario}`);
-      const data = await res.json();
-
-      if (data.yaEntreno) {
-        this.notificarMisionCumplida(); // Tu función que ya tenías
-        console.log("EVA: Entrenamiento detectado hoy. ¡Bien hecho!");
-        this.hablar("Entrenamiento detectado hoy. ¡Bien hecho!");
-      }
-    } catch (err) {
-      console.error("Error al verificar entrenamiento:", err);
-    }
-  }
-
-
-
-
 
 
   // --- MÓDULO DE RACHAS Y DEGRADACIÓN ---
@@ -481,16 +412,28 @@ class EVASystem {
   }
 
   checkBloqueoDiario() {
+    const usuario = localStorage.getItem('eva_user');
+    if (!usuario) return false;
+
+    // 1. Primero, consultamos a Turso (la fuente de verdad)
+    try {
+      const res = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
+      const data = await res.json();
+
+      if (data.yaEntreno) {
+        // Si Turso dice que entrenó, bloqueamos y guardamos en local por seguridad
+        localStorage.setItem('eva_ultima_mision', new Date().toLocaleDateString('es-ES'));
+        return true;
+      }
+    } catch (error) {
+      console.error("Error al consultar Turso, usando fallback local:", error);
+    }
+
+    // 2. Fallback: Si Turso falla o está offline, revisamos el localStorage como segunda capa
     const hoy = new Date().toLocaleDateString('es-ES');
     const ultimaMisionGuardada = localStorage.getItem('eva_ultima_mision');
 
-    console.log("Comprobando bloqueo: Hoy:", hoy, "Última:", ultimaMisionGuardada);
-
-    if (ultimaMisionGuardada === hoy) {
-      this.misionCumplida = true;
-      return true; // Indicamos que SÍ está bloqueado
-    }
-    return false;
+    return ultimaMisionGuardada === hoy;
   }
 
 
@@ -501,7 +444,6 @@ class EVASystem {
 
     console.log("Iniciando EVA...");
 
-    this.verificarSiEntrenoHoy();
 
     const backup = document.getElementById('backup').style.display = 'none';
 
