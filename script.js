@@ -159,9 +159,10 @@ class EVASystem {
 
           if (validacion.autorizado) {
             localStorage.setItem('eva_secret_id', contenido.trim());
-            location.reload(); // Recarga y entra a la app
+            this.init(); // Recarga y entra a la app
           } else {
-            alert("Llave incorrecta. Acceso denegado.");
+           // alert("Llave incorrecta. Acceso denegado.");
+            this.hablar("Llave incorrecta. Acceso denegado.", 'regandina');
           }
         };
         inputArchivo.click();
@@ -546,7 +547,7 @@ class EVASystem {
     if (bloqueado) {
       this.modoMisionCumplida(); // Ejecuta tu función que oculta todo
       this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy, espera al proximo entrenamiento.");
-      this.setVideo('contenta');
+    //  this.setVideo('contenta');
       return; // DETIENE TODO: No activa micros ni sensores
     }
 
@@ -994,7 +995,7 @@ class EVASystem {
       lista.innerHTML = `
                 <div style="text-align: center; padding: 20px; animation: fadeIn 0.5s ease;">
                     <h2 style="color: #00ff88; font-size: 2rem; margin-bottom: 10px;">¡RUTINA COMPLETADA!</h2>
-                    <p style="color: #ccc; font-size: 1.2rem;">Buen trabajo, operador. Has superado todos los ejercicios.</p>
+                    <p style="color: #ccc; font-size: 1.2rem;">Buen trabajo, ${this.user}. Has superado todos los ejercicios.</p>
                 </div>
             `;
     }
@@ -1005,7 +1006,7 @@ class EVASystem {
 
     // 3. EVA da las instrucciones de voz sin competir con música alta
     setTimeout(() => {
-      this.hablar("Rutina de fuerza completada con éxito, operador. Excelente disciplina. Ahora, registra tu nivel de fatiga en el panel para guardar la sesión.");
+      this.hablar("Rutina de fuerza completada con éxito, " + this.user + ". Excelente disciplina. Ahora, registra tu nivel de fatiga en el panel para guardar la sesión.");
     }, 300);
 
     // 4. Activamos el flujo de guardado que ya tienes programado
@@ -1073,7 +1074,7 @@ class EVASystem {
 
     // 3. Sincronización
     this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.peso);
-    this.actualizarEstadoEVA(false);
+   // this.actualizarEstadoEVA(false);
 
     this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`);
 
