@@ -14,6 +14,7 @@ await db.execute(`
     )
 `);
 
+
 export default async function handler(req, res) {
     // Si es POST, registramos
     if (req.method === 'POST') {

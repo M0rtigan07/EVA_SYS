@@ -140,7 +140,7 @@ class EVASystem {
       // Llamamos a tu backend para guardar
       await fetch('/api/auth', {
         method: 'POST',
-        body: JSON.stringify({ accion: 'registrar', nombre, eva_secret_id: nuevoId })
+        body: JSON.stringify({ accion: 'registrar', nombre, eva_secret_id: nuevoSecretId }),
       });
 
       localStorage.setItem('eva_secret_id', nuevoId);
@@ -439,7 +439,7 @@ class EVASystem {
 
   async init() {
 
-
+    console.log("Iniciando EVA...");
 
 
 
