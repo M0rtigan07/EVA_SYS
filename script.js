@@ -133,6 +133,7 @@ class EVASystem {
     const llaveLocal = localStorage.getItem('eva_secret_id');
 
     if (!llaveLocal) {
+      console.log("No se encontró llave local. Solicitando registro...");
       this.hablar("POR FAVOR, INTRODUCE TU NOMBRE DE USUARIO.");
       const nombre = prompt("EVA: Introduce tu nombre:");
       if (!nombre) return;
@@ -142,7 +143,7 @@ class EVASystem {
       const data = await respuesta.json();
 
       if (data.id_encontrado) {
-        //  alert("Usuario ya registrado. Por favor, carga tu archivo de backup para obtener tu ID original.");
+        console.log("Usuario ya registrado. Solicitando archivo de backup.");
         this.hablar("Usuario ya registrado. Por favor, carga tu archivo de backup para obtener tu ID original.");
 
         // 1. Pedimos el archivo al usuario
@@ -192,7 +193,7 @@ class EVASystem {
         const blob = new Blob([nuevoSecretId], { type: 'text/plain' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'eva_backup.txt';
+        link.download = 'eva_backup_' + this.user + '.txt';
         link.click();
 
         console.log("EVA: Usuario registrado y llave generada.");
@@ -206,10 +207,12 @@ class EVASystem {
       const data = await respuesta.json();
 
       if (data.autorizado) {
-  const backup = document.getElementById('backup').style.display = 'none';
-        this.init();
+        console.log("Acceso autorizado. Iniciando sesión.");
+        this.hablar("Acceso autorizado. Iniciando sesión.");
+          this.init();
       } else {
-        alert("Acceso denegado: Llave no reconocida.");
+        console.log("Acceso denegado: Llave no reconocida.");
+        this.hablar("Acceso denegado: Llave no reconocida.", 'regandina');
         localStorage.removeItem('eva_secret_id');
         location.reload();
       }
@@ -481,6 +484,8 @@ class EVASystem {
   async init() {
 
     console.log("Iniciando EVA...");
+
+     const backup = document.getElementById('backup').style.display = 'none';
 
     this.user = localStorage.getItem('eva_user');
     console.log("Usuario detectado:", this.user);
