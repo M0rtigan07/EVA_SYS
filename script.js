@@ -149,7 +149,7 @@ class EVASystem {
         // 1. Pedimos el archivo al usuario
         const backup = document.getElementById('backup').style.display = 'block';
         const inputArchivo = document.getElementById('input-backup');
-       
+
         inputArchivo.onchange = async (e) => {
           const file = e.target.files[0];
           const contenido = await file.text(); // El archivo contiene el eva_secret_id
@@ -162,7 +162,7 @@ class EVASystem {
             localStorage.setItem('eva_secret_id', contenido.trim());
             this.init(); // Recarga y entra a la app
           } else {
-           // alert("Llave incorrecta. Acceso denegado.");
+            // alert("Llave incorrecta. Acceso denegado.");
             this.hablar("Llave incorrecta. Acceso denegado.", 'regandina');
           }
         };
@@ -209,7 +209,7 @@ class EVASystem {
       if (data.autorizado) {
         console.log("Acceso autorizado. Iniciando sesión.");
         this.hablar("Acceso autorizado. Iniciando sesión.");
-          this.init();
+        this.init();
       } else {
         console.log("Acceso denegado: Llave no reconocida.");
         this.hablar("Acceso denegado: Llave no reconocida.", 'regandina');
@@ -256,7 +256,23 @@ class EVASystem {
      });
    } */
 
+  async verificarSiEntrenoHoy() {
+    const usuario = localStorage.getItem('eva_user');
+    if (!usuario) return;
 
+    try {
+      const res = await fetch(`/api/check-hoy?usuario=${usuario}`);
+      const data = await res.json();
+
+      if (data.yaEntreno) {
+        this.notificarMisionCumplida(); // Tu función que ya tenías
+        console.log("EVA: Entrenamiento detectado hoy. ¡Bien hecho!");
+        this.hablar("Entrenamiento detectado hoy. ¡Bien hecho!");
+      }
+    } catch (err) {
+      console.error("Error al verificar entrenamiento:", err);
+    }
+  }
 
 
 
@@ -485,7 +501,9 @@ class EVASystem {
 
     console.log("Iniciando EVA...");
 
-     const backup = document.getElementById('backup').style.display = 'none';
+    this.verificarSiEntrenoHoy();
+
+    const backup = document.getElementById('backup').style.display = 'none';
 
     this.user = localStorage.getItem('eva_user');
     console.log("Usuario detectado:", this.user);
@@ -552,7 +570,7 @@ class EVASystem {
     if (bloqueado) {
       this.modoMisionCumplida(); // Ejecuta tu función que oculta todo
       this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy, espera al proximo entrenamiento.");
-    //  this.setVideo('contenta');
+      //  this.setVideo('contenta');
       return; // DETIENE TODO: No activa micros ni sensores
     }
 
@@ -1079,7 +1097,7 @@ class EVASystem {
 
     // 3. Sincronización
     this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.peso);
-   // this.actualizarEstadoEVA(false);
+    // this.actualizarEstadoEVA(false);
 
     this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`);
 
