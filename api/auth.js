@@ -17,7 +17,7 @@ export default async function handler(req, res) {
         await db.execute(`
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nombre TEXT,
+                nombre TEXT UNIQUE,
                 eva_secret_id TEXT UNIQUE
             )
         `);
