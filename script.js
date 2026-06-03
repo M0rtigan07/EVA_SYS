@@ -1044,7 +1044,7 @@ class EVASystem {
     this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.peso);
     this.actualizarEstadoEVA(false);
 
-    this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo.`, "contenta");
+    this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`);
 
     // Limpieza de interfaz
     document.getElementById("btn-finalizar-fuerza").style.display = "none";
@@ -1159,7 +1159,7 @@ class EVASystem {
     if (pesoActual > pesoAnterior) {
       this.actualizarEstadoEVA(true);
       localStorage.setItem('eva_enojada', 'true');
-      this.hablar("¡Peso registrado mayor que el último! has engordado " + diferencia + " kilos. Esto no es bueno para tu progreso. ¡A ENTRENAR MÁS DURO!", 'regandina');
+      this.hablar("¡Peso registrado mayor que el último! " + this.user + " has engordado " + diferencia + " kilos. Esto no es bueno para tu progreso. ¡A ENTRENAR MÁS DURO!", 'regandina');
     }
 
     if (pesoActual < pesoAnterior) {
