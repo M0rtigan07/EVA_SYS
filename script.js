@@ -144,7 +144,7 @@ class EVASystem {
       });
 
       localStorage.setItem('eva_secret_id', nuevoSecretId);
-      nombre = this.user;
+
 
       // Guardamos en Turso (Nombre + Llave)
       await this.guardarUsuarioEnNube(nombre, nuevoSecretId);
@@ -166,6 +166,7 @@ class EVASystem {
       const data = await respuesta.json();
 
       if (data.autorizado) {
+        nombre = this.user;
         this.init();
       } else {
         alert("Acceso denegado: Llave no reconocida.");
