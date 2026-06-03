@@ -109,7 +109,7 @@ class EVASystem {
     return btoa(JSON.stringify(payload));
   }
 
-  
+
   // FUNCIONES DE INTERFAZ Y CONTROL PRINCIPALES
 
 
@@ -415,25 +415,18 @@ class EVASystem {
     const usuario = localStorage.getItem('eva_user');
     if (!usuario) return false;
 
-    // 1. Primero, consultamos a Turso (la fuente de verdad)
     try {
-      const res = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
-      const data = await res.json();
+      // La llamada a Turso
+      const response = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
+      const data = await response.json();
 
-      if (data.yaEntreno) {
-        // Si Turso dice que entrenó, bloqueamos y guardamos en local por seguridad
-        localStorage.setItem('eva_ultima_mision', new Date().toLocaleDateString('es-ES'));
-        return true;
-      }
+      // Retornamos el valor real de la base de datos
+      return !!data.yaEntreno;
     } catch (error) {
-      console.error("Error al consultar Turso, usando fallback local:", error);
+      console.error("Error consultando Turso:", error);
+      // Si hay error, devolvemos false para no bloquear la app incorrectamente
+      return false;
     }
-
-    // 2. Fallback: Si Turso falla o está offline, revisamos el localStorage como segunda capa
-    const hoy = new Date().toLocaleDateString('es-ES');
-    const ultimaMisionGuardada = localStorage.getItem('eva_ultima_mision');
-
-    return ultimaMisionGuardada === hoy;
   }
 
 
@@ -1421,15 +1414,15 @@ class EVASystem {
     if (!usuario) return false;
 
     try {
-        // Consultamos la fuente de verdad (Turso)
-        const response = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
-        const data = await response.json();
-        
-        // Retornamos el estado real desde la base de datos
-        return data.yaEntreno; 
+      // Consultamos la fuente de verdad (Turso)
+      const response = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
+      const data = await response.json();
+
+      // Retornamos el estado real desde la base de datos
+      return data.yaEntreno;
     } catch (e) {
-        console.error("Error conectando a Turso:", e);
-        return false;
+      console.error("Error conectando a Turso:", e);
+      return false;
     }
   }
 
