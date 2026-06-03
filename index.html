@@ -111,7 +111,7 @@
             </div>
 
 
-            <div   class="card"  flex-direction: column; align-items: center; gap: 10px; border-left-color: #00ff88;">
+            <div class="card" flex-direction: column; align-items: center; gap: 10px; border-left-color: #00ff88;">
                 <p style="font-size:0.6rem; color:#adff2f; margin:0;">Control de Peso</p>
 
                 <label style="font-size:0.6rem; color:#888;"></label>
@@ -171,7 +171,11 @@
                         </svg>
                         <span>BORRAR</span>
                     </button>
-                  
+
+                    <div id="backup" class="card" style="display: none; flex-direction: column; align-items: center; gap: 10px; border-color: var(--blue-tech);">
+                        <input type="file" id="input-backup" accept=".txt">
+                        <button id="btn-login-confirmar">Confirmar</button>
+                    </div>
 
 
                 </div>

@@ -146,8 +146,9 @@ class EVASystem {
         this.hablar("Usuario ya registrado. Por favor, carga tu archivo de backup para obtener tu ID original.");
 
         // 1. Pedimos el archivo al usuario
-        const inputArchivo = document.createElement('input');
-        inputArchivo.type = 'file';
+        const backup = document.getElementById('backup').style.display = 'block';
+        const inputArchivo = document.getElementById('input-backup');
+       
         inputArchivo.onchange = async (e) => {
           const file = e.target.files[0];
           const contenido = await file.text(); // El archivo contiene el eva_secret_id
@@ -204,7 +205,7 @@ class EVASystem {
       const data = await respuesta.json();
 
       if (data.autorizado) {
-
+  const backup = document.getElementById('backup').style.display = 'none';
         this.init();
       } else {
         alert("Acceso denegado: Llave no reconocida.");
@@ -1061,7 +1062,7 @@ class EVASystem {
     if (this.streak > 0 && this.streak % 7 === 0) {
       this.ejecutarCelebracionSemanal();
     } else {
-      this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`, this.estaEnojada ? 'regandina' : 'mision_ok');
+      this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user} .`, this.estaEnojada ? 'regandina' : 'mision_ok');
     }
 
     // 2. Marcamos como completada ANTES de enviar para bloquear re-intentos
