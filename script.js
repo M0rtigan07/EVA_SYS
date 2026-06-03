@@ -1402,20 +1402,14 @@ class EVASystem {
   }
 
   verificarSiMisionCompletadaHoy() {
-    const usuario = localStorage.getItem('eva_user');
-    if (!usuario) return false;
+    // 1. Obtenemos la fecha de hoy en formato YYYY-MM-DD
+    const hoy = new Date().toISOString().split('T')[0];
 
-    try {
-      // Consultamos la fuente de verdad (Turso)
-      const response = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
-      const data = await response.json();
+    // 2. Recuperamos la fecha del último entrenamiento (debes haberla guardado antes)
+    const ultimaFecha = localStorage.getItem('eva_last_date');
 
-      // Retornamos el estado real desde la base de datos
-      return data.yaEntreno;
-    } catch (e) {
-      console.error("Error conectando a Turso:", e);
-      return false;
-    }
+    // 3. Comparamos directamente
+    return ultimaFecha === hoy;
   }
 
   renderRachaUI() {
