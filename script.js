@@ -22,7 +22,7 @@ class EVASystem {
     this.estaEnojada = false;
     this.timerInterval = null;
     this.speech = window.speechSynthesis;
-    this.misionCumplida = this.verificarSiMisionCompletadaHoy();
+    this.misionCumplida = false;
     this.streak = localStorage.getItem('eva_streak') ? parseInt(localStorage.getItem('eva_streak')) : 0;
     this.lastTrainingDate = localStorage.getItem('eva_last_date') || null;
     this.estado = "";
@@ -512,6 +512,7 @@ class EVASystem {
     if (bloqueado) {
       this.modoMisionCumplida(); // Ejecuta tu función que oculta todo
       this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy, espera al proximo entrenamiento.");
+      this.actualizarEstadoEVA(this.estaEnojada); // Mantiene el estado actual (enojada o feliz)
       //  this.setVideo('contenta');
       return; // DETIENE TODO: No activa micros ni sensores
     }
@@ -1416,8 +1417,20 @@ class EVASystem {
   }
 
   verificarSiMisionCompletadaHoy() {
-    const hoy = new Date().toLocaleDateString();
-    return this.db.some(r => r.fecha.split(',')[0] === hoy);
+    const usuario = localStorage.getItem('eva_user');
+    if (!usuario) return false;
+
+    try {
+        // Consultamos la fuente de verdad (Turso)
+        const response = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
+        const data = await response.json();
+        
+        // Retornamos el estado real desde la base de datos
+        return data.yaEntreno; 
+    } catch (e) {
+        console.error("Error conectando a Turso:", e);
+        return false;
+    }
   }
 
   renderRachaUI() {
