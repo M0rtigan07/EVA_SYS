@@ -143,7 +143,7 @@ class EVASystem {
         body: JSON.stringify({ accion: 'registrar', nombre, eva_secret_id: nuevoSecretId }),
       });
 
-      localStorage.setItem('eva_secret_id', nuevoId);
+      localStorage.setItem('eva_secret_id', nuevoSecretId);
       nombre = this.user;
 
       // Guardamos en Turso (Nombre + Llave)
