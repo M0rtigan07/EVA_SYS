@@ -109,16 +109,16 @@ class EVASystem {
     return btoa(JSON.stringify(payload));
   }
 
-  validarToken(token) {
-    try {
-      const payload = JSON.parse(atob(token));
-      // Validar si el token es muy antiguo (ej. > 24 horas)
-      const expira = 24 * 60 * 60 * 1000;
-      return (Date.now() - payload.timestamp) < expira;
-    } catch (e) {
-      return false;
-    }
-  }
+  /* validarToken(token) {
+   try {
+     const payload = JSON.parse(atob(token));
+     // Validar si el token es muy antiguo (ej. > 24 horas)
+     const expira = 24 * 60 * 60 * 1000;
+     return (Date.now() - payload.timestamp) < expira;
+   } catch (e) {
+     return false;
+   } 
+ } */
 
   // FUNCIONES DE INTERFAZ Y CONTROL PRINCIPALES
 
@@ -126,77 +126,97 @@ class EVASystem {
   // Mejora visual al iniciar login
   async iniciarSesion() {
     const btn = document.getElementById('btn-iniciar');
-    // btn.style.display = 'none'; // Ocultamos el botón
+    console.log("Iniciando sesión...");
+    const llaveLocal = localStorage.getItem('eva_secret_id');
 
-    // Ejecutar al cargar la página
-    const tokenGuardado = localStorage.getItem('eva_session_token');
+    // CASO 1: No hay llave (Usuario nuevo)
+    if (!llaveLocal) {
+      this.hablar("POR FAVOR, INTRODUCE TU NOMBRE DE USUARIO PARA REGISTRARTE.");
+      const nombre = prompt("EVA: Sistema Introduce tu nombre de usuario:");
+      if (!nombre) return; // Si cancela, no hacemos nada
 
-    if (tokenGuardado && this.validarToken(tokenGuardado)) {
-      const data = JSON.parse(atob(tokenGuardado));
-      console.log("Sesión restaurada para:", data.user);
-      // Bloqueamos el botón automáticamente
-      this.bloquearBotonInicio();
-    } else {
-      // Token inválido o expirado
-      localStorage.removeItem('eva_session_token');
+      // Generamos la llave y guardamos todo de una vez
+      const nuevoSecretId = crypto.randomUUID();
+      // Llamamos a tu backend para guardar
+      await fetch('/api/auth', {
+        method: 'POST',
+        body: JSON.stringify({ accion: 'registrar', nombre, eva_secret_id: nuevoId })
+      });
+
+      localStorage.setItem('eva_secret_id', nuevoId);
+      nombre = this.user;
+
+      // Guardamos en Turso (Nombre + Llave)
+      await this.guardarUsuarioEnNube(nombre, nuevoSecretId);
+
+      // Descargamos el backup (tu llave maestra)
+      const blob = new Blob([nuevoSecretId], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'eva_backup.txt';
+      link.click();
+
+      console.log("EVA: Usuario registrado y llave generada.");
+      this.init(); // Arrancamos la app
     }
+    // CASO 2: Ya existe llave (Usuario vuelve)
+    else {
+      // --- VALIDACIÓN ---
+      const respuesta = await fetch(`/api/auth?eva_secret_id=${llaveLocal}`);
+      const data = await respuesta.json();
 
-    const nombre = await this.solicitarIdentidad(); // Tu función de login anterior
-
-    if (nombre) {
-      const token = this.generarToken(nombre);
-      localStorage.setItem('eva_session_token', token);
-
-      // Actualizar UI
-      document.getElementById('display-usuario').innerText = `USUARIO: ${nombre}`;
-      this.bloquearBotonInicio();
+      if (data.autorizado) {
+        this.init();
+      } else {
+        alert("Acceso denegado: Llave no reconocida.");
+        localStorage.removeItem('eva_secret_id');
+        location.reload();
+      }
     }
-
-    // Al volver, EVA da la bienvenida personalizada
-    const titulo = document.getElementById('titulo-eva');
-    titulo.innerText = `BIENVENIDO, ${nombre.toUpperCase()}`;
-
-    // Aquí puedes cargar automáticamente su racha
-    // document.getElementById('display-racha').innerText = `${this.streak} DÍAS`;
   }
 
   // 1. Método para solicitar login
 
-  async solicitarIdentidad() {
-    const overlay = document.getElementById('login-overlay');
-    // 1. Si ya existe, no preguntes nada, devuelve el nombre y continúa
-    const usuarioGuardado = localStorage.getItem('eva_user');
-    this.user = usuarioGuardado;
-    if (usuarioGuardado) {
-      document.getElementById('display-usuario').innerText = `OPERADOR: ${usuarioGuardado}`;
-      return usuarioGuardado;
-    }
+  //primera version
 
-    // 2. Si no existe, activamos la interfaz "Estilo Terminal"
-    return new Promise((resolve) => {
-      const overlay = document.getElementById('login-overlay');
-      overlay.style.display = 'block';
+  /*  async solicitarIdentidad() {
+     const overlay = document.getElementById('login-overlay');
+     // 1. Si ya existe, no preguntes nada, devuelve el nombre y continúa
+     const usuarioGuardado = localStorage.getItem('eva_user');
+     this.user = usuarioGuardado;
+     if (usuarioGuardado) {
+       document.getElementById('display-usuario').innerText = `OPERADOR: ${usuarioGuardado}`;
+       return usuarioGuardado;
+     }
+ 
+     // 2. Si no existe, activamos la interfaz "Estilo Terminal"
+     return new Promise((resolve) => {
+       const overlay = document.getElementById('login-overlay');
+       overlay.style.display = 'block';
+ 
+       document.getElementById('btn-login-confirmar').onclick = () => {
+         const nombre = document.getElementById('input-nombre').value.trim();
+         if (nombre) {
+           // Guardamos la identidad
+           localStorage.setItem('eva_user', nombre);
+           this.user = nombre;
+ 
+           // Animación visual de "Vínculo establecido"
+           overlay.style.display = 'none';
+           document.getElementById('btn-info-usuario').innerText = `OPERADOR: ${nombre}`;
+ 
+           resolve(nombre); // EVA continúa su flujo
+           this.init();
+         }
+       };
+     });
+   } */
 
-      document.getElementById('btn-login-confirmar').onclick = () => {
-        const nombre = document.getElementById('input-nombre').value.trim();
-        if (nombre) {
-          // Guardamos la identidad
-          localStorage.setItem('eva_user', nombre);
-          this.user = nombre;
-
-          // Animación visual de "Vínculo establecido"
-          overlay.style.display = 'none';
-          document.getElementById('btn-info-usuario').innerText = `OPERADOR: ${nombre}`;
-
-          resolve(nombre); // EVA continúa su flujo
-          this.init();
-        }
-      };
-    });
-  }
 
 
-  // Dentro de tu clase EVASystem
+
+
+
 
 
   // --- MÓDULO DE RACHAS Y DEGRADACIÓN ---
@@ -419,13 +439,9 @@ class EVASystem {
 
   async init() {
 
-    if (this.estaEnojada == true) {
-      this.actualizarEstadoEVA(true);
-      this.hablar("SISTEMAS REINICIADOS. SIGO ENFADADA, ¡A ENTRENAR!", 'regandina');
-    } else {
-      this.actualizarEstadoEVA(false);
-      //  this.hablar("Sistemas en línea. Bienvenido + " + this.user + ". ¿Listo para entrenar?");
-    }
+
+
+
 
     const btnIniciar = document.getElementById('btn-iniciar');
     btnIniciar.disabled = true;
@@ -479,18 +495,6 @@ class EVASystem {
 
     });
 
-    //FIN DE INIT()
-
-    /*  document.getElementById('btn-guardar-peso').addEventListener('click', () => {
-       this.pesoActual = document.getElementById('input-peso').value;
-       this.procesarPesoManual(this.pesoActual);
-       console.log("Peso manual guardado:", this.pesoActual);
-     
-     }); */
-
-
-
-
 
     // 1. Lo primero: ¿Ya entreno hoy?
     const bloqueado = this.checkBloqueoDiario();
@@ -526,7 +530,7 @@ class EVASystem {
         btnInit.style.opacity = "0.8";
       }
 
-      this.actualizarEstadoEVA(false); // Verde/Feliz
+      //  this.actualizarEstadoEVA(false); // Verde/Feliz
       this.setVideo('reposo');
 
       // EVA te informa y se calla
@@ -588,7 +592,7 @@ class EVASystem {
 
     if (bloqueoRecuperacion) {
       this.setVideo('reposo');
-      this.hablar("Sistemas en pausa.recuperación activa.");
+      this.hablar("Sistemas en pausa. necesutas descansar " + this.user + ".");
       this.playMusic('reposo', 0.2);
     } else if (this.routine === "DESCANSO") {
       this.setVideo('reposo');
@@ -654,6 +658,8 @@ class EVASystem {
     document.getElementById('btn-pause-cardio').style.display = "block"; // Mostrar pausa
 
     document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
+    document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
+    document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
 
 
     // FORZAMOS LA LECTURA FRESCA DEL DATO
@@ -811,6 +817,8 @@ class EVASystem {
     this.currentMusicVolume = 0.4;
 
     document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
+    document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
+    document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
 
 
     // --- AQUÍ APLICAMOS LA PROGRESIÓN ---
@@ -1126,7 +1134,8 @@ class EVASystem {
     console.log("Comparando peso actual:", pesoActual, "con peso anterior:", this.ultimoPeso);
     const pesoAnterior = parseInt(localStorage.getItem('eva_ultimo_peso_anterior')) || 80;
 
-    const diferencia = pesoActual - pesoAnterior;
+    const diferencia = Math.abs(pesoActual - pesoAnterior);
+
     console.log("Diferencia de peso:", diferencia);
 
     if (pesoActual > pesoAnterior) {
@@ -1142,7 +1151,7 @@ class EVASystem {
     }
 
     // Guardar el peso actual como el "anterior" para la próxima comparación
-    localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
+    //  localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
 
 
 
@@ -1548,7 +1557,7 @@ class EVASystem {
 const EVA = new EVASystem();
 
 // Función de inicio de sesión que usa el token encriptado
-EVA.iniciarSesion = async function () {
+/* EVA.iniciarSesion = async function () {
   const nombre = await this.solicitarIdentidad();
 
   // Generar y guardar el token encriptado (Base64)
@@ -1558,7 +1567,7 @@ EVA.iniciarSesion = async function () {
   document.getElementById('mensaje-info').innerText = `USUARIO: ${nombre}`;
   this.iniciarEntrenamiento();
 };
-
+ */
 
 // En tu método de inicialización o donde configuras el evento
 document.getElementById('btn-guardar-peso').addEventListener('click', () => {
