@@ -412,21 +412,11 @@ class EVASystem {
   }
 
   checkBloqueoDiario() {
-    const usuario = localStorage.getItem('eva_user');
-    if (!usuario) return false;
+    const hoy = new Date().toISOString().split('T')[0];
+    const fechaGuardada = localStorage.getItem('eva_ultima_fecha_entreno');
 
-    try {
-      // La llamada a Turso
-      const response = await fetch(`/api/check-hoy?usuario=${encodeURIComponent(usuario)}`);
-      const data = await response.json();
-
-      // Retornamos el valor real de la base de datos
-      return !!data.yaEntreno;
-    } catch (error) {
-      console.error("Error consultando Turso:", error);
-      // Si hay error, devolvemos false para no bloquear la app incorrectamente
-      return false;
-    }
+    // Si la fecha guardada es la de hoy, YA ENTRENÓ.
+    return fechaGuardada === hoy;
   }
 
 
@@ -1029,7 +1019,9 @@ class EVASystem {
     this.misionCumplida = true;
     this.streak = (this.streak || 0) + 1;
     localStorage.setItem('eva_streak', this.streak);
-    localStorage.setItem('eva_ultima_mision', new Date().toLocaleDateString('es-ES'));
+
+    const hoy = new Date().toISOString().split('T')[0]; // Ejemplo: "2026-06-03"
+    localStorage.setItem('eva_ultima_fecha_entreno', hoy);
 
     // 3. Sincronización
     this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.peso);
