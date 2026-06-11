@@ -109,6 +109,35 @@ class EVASystem {
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
+  async registrarUsuarioEnTurso(nombre, eva_secret_id) {
+    console.log("Registrando usuario en Turso...");
+
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nombre, eva_secret_id })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Usuario registrado con éxito en Turso.");
+        return true;
+      } else {
+        console.error("Error al registrar:", data.error);
+        this.hablar("Hubo un problema al crear tu perfil.");
+        return false;
+      }
+    } catch (error) {
+      console.error("Fallo de conexión:", error);
+      this.hablar("No pude conectar con la base de datos.");
+      return false;
+    }
+  }
+
 
   // Mejora visual al iniciar login
 
@@ -137,7 +166,12 @@ class EVASystem {
         // USUARIO NUEVO: Lo creamos en Turso y en Local
         llave = this.generarLlaveSegura(); // Función tuya
         await this.registrarUsuarioEnTurso(usuario, llave);
+
+        localStorage.setItem('eva_user') = usuario;
+        localStorage.setItem('eva_key') = llave;
+
         this.descargarArchivoBackup(usuario, llave); // Le damos su llave
+        await this.init();
       }
     }
 
