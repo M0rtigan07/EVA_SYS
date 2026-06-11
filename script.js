@@ -163,15 +163,19 @@ class EVASystem {
         await this.gestionarArchivoBackup(usuario); // Espera a que suba el archivo
         return;
       } else {
-        // USUARIO NUEVO: Lo creamos en Turso y en Local
-        llave = this.generarLlaveSegura(); // Función tuya
-        await this.registrarUsuarioEnTurso(usuario, llave);
+        // USUARIO NUEVO
+        const nuevaLlave = this.generarLlaveSegura();
 
-        localStorage.setItem('eva_user') = usuario;
-        localStorage.setItem('eva_key') = llave;
+        // Llamamos a la función que acabamos de crear
+        const registrado = await this.registrarUsuarioEnTurso(usuario, nuevaLlave);
 
-        this.descargarArchivoBackup(usuario, llave); // Le damos su llave
-        await this.init();
+        if (registrado) {
+          localStorage.setItem('eva_user', usuario);
+          localStorage.setItem('eva_key', nuevaLlave);
+          this.descargarArchivoBackup(usuario, nuevaLlave);
+          this.hablar("Perfil creado y llave descargada. Bienvenido, " + usuario);
+          await this.init();
+        }
       }
     }
 
