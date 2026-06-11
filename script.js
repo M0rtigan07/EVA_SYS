@@ -197,9 +197,19 @@ class EVASystem {
       const data = await respuesta.json();
 
       if (data.autorizado) {
-        console.log("Acceso autorizado. Iniciando sesión.");
-        this.hablar("Acceso autorizado. Iniciando sesión.");
-        this.init();
+        const hoy = new Date().toISOString().split('T')[0];
+        const ultimaMision = localStorage.getItem('eva_last_date');
+
+        if (ultimaMision === hoy) {
+          console.log("Misión ya completada. Bloqueando...");
+          this.modoMisionCumplida();
+          this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
+          return; // Salimos: no hace falta ejecutar init() porque la app está bloqueada
+        }
+
+        // 3. Si todo está OK, finalmente iniciamos la app
+        console.log("Validación correcta. Iniciando app...");
+        await this.init();
       } else {
         console.log("Acceso denegado: Llave no reconocida.");
         this.hablar("Acceso denegado: Llave no reconocida.", 'regandina');
