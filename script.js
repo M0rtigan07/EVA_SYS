@@ -150,7 +150,20 @@ class EVASystem {
 
           if (validacion.autorizado) {
             localStorage.setItem('eva_secret_id', contenido.trim());
-            this.init(); // Recarga y entra a la app
+
+            const hoy = new Date().toISOString().split('T')[0]; // "2026-06-11"
+            const res = await fetch(`/api/check-hoy?usuario=${usuario}&fecha=${hoy}`);
+            const data = await res.json();
+
+            if (data.yaEntreno) {
+              console.log("Turso confirma: Entrenamiento ya registrado hoy.");
+              this.modoMisionCumplida();
+              this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
+              return; // ¡Aquí cortamos el flujo! No llamamos a init()
+            } else {
+              this.init();
+            }
+
           } else {
             // alert("Llave incorrecta. Acceso denegado.");
             this.hablar("Llave incorrecta. Acceso denegado.", 'regandina');
