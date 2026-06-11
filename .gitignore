@@ -17,3 +17,5 @@ Thumbs.db
 *.db
 *.sqlite
 *.sqlite-journal
+
+eva backups/

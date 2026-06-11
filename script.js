@@ -727,6 +727,12 @@ class EVASystem {
     // Primero detenemos todo lo que estuviera corriendo
     this.detenerTodo();
 
+    const btnIniciar = document.getElementById('btn-iniciar');
+    btnIniciar.disabled = true;
+    btnIniciar.innerText = "SISTEMA OPERATIVO: OFFLINE";
+    btnIniciar.style.opacity = "0.6";
+    btnIniciar.style.cursor = "default";
+
     // Luego ocultamos la UI de forma defensiva
     const elementos = ['btn-iniciar-entrenamiento', 'panel-ejercicios', 'cronometro'];
     elementos.forEach(id => {
@@ -735,7 +741,7 @@ class EVASystem {
     });
 
     // Finalmente avisamos al usuario
-    this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
+    this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy. descansa.");
   }
 
 
