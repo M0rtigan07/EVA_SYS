@@ -98,19 +98,16 @@ class EVASystem {
     // this.initVoiceRecognition();
   } // FIN DEL CONSTRUCTOR
 
-  // FUNCIONES DE AUTENTICACIÓN Y TOKEN (BÁSICO PARA SIMULAR SESIONES)
-  generarToken(usuario) {
-    const payload = {
-      user: usuario,
-      timestamp: Date.now(),
-      status: 'AUTHORIZED'
-    };
-    // Encriptación básica en Base64 para evitar lectura directa
-    return btoa(JSON.stringify(payload));
-  }
+
 
 
   // FUNCIONES DE INTERFAZ Y CONTROL PRINCIPALES
+  generarLlaveSegura() {
+    // Genera un array de 32 bytes aleatorios y los convierte a una cadena hexadecimal
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  }
 
 
   // Mejora visual al iniciar login
