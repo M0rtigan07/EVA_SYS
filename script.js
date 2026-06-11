@@ -197,19 +197,24 @@ class EVASystem {
       const data = await respuesta.json();
 
       if (data.autorizado) {
-        const hoy = new Date().toISOString().split('T')[0];
-        const ultimaMision = localStorage.getItem('eva_last_date');
+        try {
+          const hoy = new Date().toISOString().split('T')[0]; // "2026-06-11"
+          const res = await fetch(`/api/check-hoy?usuario=${usuario}&fecha=${hoy}`);
+          const data = await res.json();
 
-        if (ultimaMision === hoy) {
-          console.log("Misión ya completada. Bloqueando...");
-          this.modoMisionCumplida();
-          this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
-          return; // Salimos: no hace falta ejecutar init() porque la app está bloqueada
+          if (data.yaEntreno) {
+            console.log("Turso confirma: Entrenamiento ya registrado hoy.");
+            this.modoMisionCumplida();
+            this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
+            return; // ¡Aquí cortamos el flujo! No llamamos a init()
+          }
+        } catch (e) {
+          console.warn("Nube inaccesible, confiamos en registro local.");
         }
 
-        // 3. Si todo está OK, finalmente iniciamos la app
-        console.log("Validación correcta. Iniciando app...");
+        // 3. Si llega aquí, es luz verde para iniciar
         await this.init();
+
       } else {
         console.log("Acceso denegado: Llave no reconocida.");
         this.hablar("Acceso denegado: Llave no reconocida.", 'regandina');
