@@ -116,126 +116,116 @@ class EVASystem {
   // Mejora visual al iniciar login
 
   async iniciarSesion() {
-
-    const btn = document.getElementById('btn-iniciar');
     console.log("Iniciando sesión...");
 
-    const llaveLocal = localStorage.getItem('eva_secret_id');
+    // 1. Obtenemos datos del almacenamiento local
+    let usuario = localStorage.getItem('eva_user');
+    let llave = localStorage.getItem('eva_key');
 
-    if (!llaveLocal) {
-      console.log("No se encontró llave local. Solicitando registro...");
-      this.hablar("POR FAVOR, INTRODUCE TU NOMBRE DE USUARIO.");
-      const nombre = prompt("EVA: Introduce tu nombre:");
-      if (!nombre) return;
+    // 2. Si no hay usuario ni llave, es un usuario nuevo (o perdió la caché)
+    if (!usuario || !llave) {
+      usuario = prompt("Introduce tu nombre de usuario:");
+      if (!usuario) return; // Cancelado
 
-      // NUEVO: Intentamos obtener el ID real de la nube primero
-      const respuesta = await fetch(`/api/auth?nombre=${nombre}`); // Necesitas añadir esta lógica en GET
-      const data = await respuesta.json();
+      // Verificamos si existe en Turso
+      const res = await fetch(`/api/auth?nombre=${usuario}`);
+      const data = await res.json();
 
       if (data.id_encontrado) {
-        console.log("Usuario ya registrado. Solicitando archivo de backup.");
-        this.hablar("Usuario ya registrado. Por favor, carga tu archivo de backup para obtener tu ID original.");
-
-        // 1. Pedimos el archivo al usuario
-        const backup = document.getElementById('backup').style.display = 'block';
-        const inputArchivo = document.getElementById('input-backup');
-
-        inputArchivo.onchange = async (e) => {
-          const file = e.target.files[0];
-          const contenido = await file.text(); // El archivo contiene el eva_secret_id
-
-          // 2. Enviamos el ID del archivo a comprobar contra la base de datos
-          const res = await fetch(`/api/auth?nombre=${nombre}&eva_secret_id=${contenido.trim()}`);
-          const validacion = await res.json();
-
-          if (validacion.autorizado) {
-            localStorage.setItem('eva_secret_id', contenido.trim());
-
-            const hoy = new Date().toISOString().split('T')[0]; // "2026-06-11"
-            const res = await fetch(`/api/check-hoy?usuario=${usuario}&fecha=${hoy}`);
-            const data = await res.json();
-
-            if (data.yaEntreno) {
-              console.log("Turso confirma: Entrenamiento ya registrado hoy.");
-              this.modoMisionCumplida();
-              this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
-              return; // ¡Aquí cortamos el flujo! No llamamos a init()
-            } else {
-              this.init();
-            }
-
-          } else {
-            // alert("Llave incorrecta. Acceso denegado.");
-            this.hablar("Llave incorrecta. Acceso denegado.", 'regandina');
-          }
-        };
-        inputArchivo.click();
-
-
+        // EL USUARIO EXISTE PERO NO TENEMOS SU LLAVE (Falta el backup)
+        this.hablar("Usuario encontrado. Por favor, sube tu archivo de backup.");
+        await this.gestionarArchivoBackup(usuario); // Espera a que suba el archivo
+        return;
       } else {
-        // Solo si NO existe, generamos uno nuevo y registramos
-        const nuevoSecretId = crypto.randomUUID();
-        // ... (tu lógica de registro aquí) ...
-        localStorage.setItem('eva_user', nombre);
-
-        // 2. Llamamos al backend para registrar todo de una vez
-        await fetch('/api/auth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            accion: 'registrar',
-            nombre: nombre,
-            eva_secret_id: nuevoSecretId
-          })
-        });
-
-        // 3. Guardamos localmente
-        localStorage.setItem('eva_secret_id', nuevoSecretId);
-
-        // Descargamos el backup (tu llave maestra)
-        const blob = new Blob([nuevoSecretId], { type: 'text/plain' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'eva_backup_' + this.user + '.txt';
-        link.click();
-
-        console.log("EVA: Usuario registrado y llave generada.");
-        this.init(); // Arrancamos la app
-
-      }
-    } else {
-      // ... (tu lógica de validación aquí) ...
-      // --- VALIDACIÓN ---
-      const respuesta = await fetch(`/api/auth?eva_secret_id=${llaveLocal}`);
-      const data = await respuesta.json();
-
-      if (data.autorizado) {
-        try {
-          const hoy = new Date().toISOString().split('T')[0]; // "2026-06-11"
-          const res = await fetch(`/api/check-hoy?usuario=${usuario}&fecha=${hoy}`);
-          const data = await res.json();
-
-          if (data.yaEntreno) {
-            console.log("Turso confirma: Entrenamiento ya registrado hoy.");
-            this.modoMisionCumplida();
-            this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
-            return; // ¡Aquí cortamos el flujo! No llamamos a init()
-          }
-        } catch (e) {
-          console.warn("Nube inaccesible, confiamos en registro local.");
-        }
-
-        // 3. Si llega aquí, es luz verde para iniciar
-        await this.init();
-
-      } else {
-        console.log("Acceso denegado: Llave no reconocida.");
-        this.hablar("Acceso denegado: Llave no reconocida.", 'regandina');
-        localStorage.removeItem('eva_secret_id');
-        location.reload();
+        // USUARIO NUEVO: Lo creamos en Turso y en Local
+        llave = this.generarLlaveSegura(); // Función tuya
+        await this.registrarUsuarioEnTurso(usuario, llave);
+        this.descargarArchivoBackup(usuario, llave); // Le damos su llave
       }
     }
+
+    // 3. Ya tenemos credenciales (o las acabamos de obtener), validamos misión
+    await this.verificarMisionYArrancar(usuario, llave);
   }
+
+  async verificarMisionYArrancar(usuario, llave) {
+    console.log("Verificando si ya ha entrenado hoy...");
+
+    try {
+      // 1. Obtener la fecha de hoy en formato YYYY-MM-DD
+      const hoy = new Date().toISOString().split('T')[0];
+
+      // 2. Llamada a tu API (necesitarás crear este pequeño endpoint en tu server)
+      // Usamos el usuario y la fecha para filtrar en historial_entrenamientos
+      const res = await fetch(`/api/check-hoy?usuario=${usuario}&fecha=${hoy}`);
+      const data = await res.json();
+
+      // 3. Lógica de decisión
+      if (data.yaEntreno) {
+        console.log("Misión detectada como completada en Turso.");
+
+        // Actualizamos estado interno para bloquear la interfaz
+        this.misionCumplida = true;
+        this.modoMisionCumplida();
+
+        this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
+        return; // ¡IMPORTANTE!: Cortamos el flujo aquí. No llamamos a init()
+      }
+
+      // 4. Si no ha entrenado, vía libre
+      console.log("Sin entrenamiento hoy. Arrancando sistema...");
+      this.misionCumplida = false;
+      await this.init();
+
+    } catch (error) {
+      console.error("Error al verificar misión con Turso:", error);
+      // Si hay error de red, como medida de seguridad, 
+      // podrías dejarlo entrar o bloquearlo dependiendo de tu nivel de exigencia.
+      this.hablar("No pude conectar con el servidor, pero el sistema está listo.");
+      await this.init();
+    }
+  }
+
+  async gestionarArchivoBackup(usuario) {
+    const backup = document.getElementById('backup').style.display = "block";
+    const inputArchivo = document.getElementById('input-backup'); // Cambia por tu ID real
+
+    inputArchivo.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const contenido = JSON.parse(event.target.result); // El JSON con la llave
+          const llave = contenido.llave; // Asumiendo que tu JSON tiene esta propiedad
+
+          // Validamos contra Turso (reutilizando tu lógica de auth.js)
+          const res = await fetch(`/api/auth?nombre=${usuario}&eva_secret_id=${llave}`);
+          const data = await res.json();
+
+          if (data.autorizado) {
+            localStorage.setItem('eva_user', usuario);
+            localStorage.setItem('eva_key', llave);
+            this.hablar("Acceso restaurado. Bienvenido de nuevo.");
+            await this.init(); // ¡Ahora sí, arrancamos!
+          } else {
+            this.hablar("Esa llave no corresponde a este usuario.");
+          }
+        } catch (err) {
+          this.hablar("Archivo inválido.");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Disparamos el selector visualmente
+    inputArchivo.click();
+  }
+
+
+
+
 
 
   // --- MÓDULO DE RACHAS Y DEGRADACIÓN ---
@@ -522,17 +512,16 @@ class EVASystem {
 
     });
 
-
     // 1. Lo primero: ¿Ya entreno hoy?
-    const bloqueado = this.checkBloqueoDiario();
+    // const bloqueado = this.checkBloqueoDiario();
 
-    if (bloqueado) {
-      this.modoMisionCumplida(); // Ejecuta tu función que oculta todo
-      this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy, espera al proximo entrenamiento.");
-      this.actualizarEstadoEVA(this.estaEnojada); // Mantiene el estado actual (enojada o feliz)
-      //  this.setVideo('contenta');
-      return; // DETIENE TODO: No activa micros ni sensores
-    }
+    /*  if (bloqueado) {
+       this.modoMisionCumplida(); // Ejecuta tu función que oculta todo
+       this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy, espera al proximo entrenamiento.");
+       this.actualizarEstadoEVA(this.estaEnojada); // Mantiene el estado actual (enojada o feliz)
+       //  this.setVideo('contenta');
+       return; // DETIENE TODO: No activa micros ni sensores
+     } */
 
     // 2. Si NO está bloqueado, sigue el arranque normal...
     console.log("Acceso concedido. Iniciando EVA...");
