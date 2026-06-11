@@ -686,36 +686,58 @@ class EVASystem {
     //  this.initVoiceRecognition();
   }
 
+  detenerTodo() {
+    console.log("Deteniendo procesos activos de EVA...");
 
-  modoMisionCumplida() {
-    document.getElementById("cardio-session-box").style.display = "none";
-
-    const fuerza = document.getElementById("fuerza-container");
-    if (fuerza) fuerza.style.display = "none";
-
-    const fatiga = document.getElementById("fatigue-module").style.display = "none";
-
-    document.getElementById("display-rutina").innerText = "COMPLETADO";
-    document.getElementById("display-rutina").style.color = "#00ff88";
-
-    document.getElementById("details-box").innerHTML =
-      "<span style='color:#00ff88'>ENTRENAMIENTO DE HOY COMPLETADO ✓</span>";
-
-    const btn = document.getElementById("btn-power");
-    btn.innerText = "DESCANSA BIEN ESOS MÚSCULOS";
-    btn.style.pointerEvents = "none";
-    btn.style.opacity = ".6";
-    btn.style.borderColor = "#00ff88";
-    btn.style.color = "#00ff88";
-
-    if (this.estaEnojada === true) {
-      this.actualizarEstadoEVA(true); // Se pone roja
-    } else {
-      this.actualizarEstadoEVA(false); // Se pone verde
+    // 1. Detener temporizadores activos
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    if (this.timerReactivacion) {
+      clearTimeout(this.timerReactivacion);
+      this.timerReactivacion = null;
     }
 
+    // 2. Detener la síntesis de voz si está hablando
+    if (this.speech && this.speech.speaking) {
+      this.speech.cancel();
+    }
 
+    // 3. Liberar WakeLock (si está activo para mantener la pantalla encendida)
+    if (this.wakeLock !== null) {
+      this.wakeLock.release()
+        .then(() => {
+          console.log("WakeLock liberado.");
+          this.wakeLock = null;
+        })
+        .catch(err => console.error("Error al liberar WakeLock:", err));
+    }
+
+    // 4. Resetear flags de estado
+    this.entrenamientoActivo = false;
+    this.initialized = false;
+
+    console.log("Todos los sistemas de EVA están en reposo.");
   }
+
+  modoMisionCumplida() {
+    this.misionCumplida = true;
+
+    // Primero detenemos todo lo que estuviera corriendo
+    this.detenerTodo();
+
+    // Luego ocultamos la UI de forma defensiva
+    const elementos = ['btn-iniciar-entrenamiento', 'panel-ejercicios', 'cronometro'];
+    elementos.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+
+    // Finalmente avisamos al usuario
+    this.hablar("Sistemas en reposo. Ya has cumplido con tu deber hoy.");
+  }
+
 
   // Método para asegurar que la racha está al día antes de usarla
   obtenerRachaActualizada() {
