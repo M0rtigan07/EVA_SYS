@@ -179,6 +179,9 @@ class EVASystem {
       }
     }
 
+
+
+
     // 3. Ya tenemos credenciales (o las acabamos de obtener), validamos misión
     await this.verificarMisionYArrancar(usuario, llave);
   }
@@ -259,7 +262,24 @@ class EVASystem {
   }
 
 
+  descargarArchivoBackup(usuario, llave) {
+    const data = {
+      usuario: usuario,
+      llave: llave,
+      fecha_creacion: new Date().toISOString()
+    };
 
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_eva_${usuario}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+    this.hablar("Se ha descargado tu archivo de seguridad. Guárdalo bien, es tu única llave.");
+  }
 
 
 
