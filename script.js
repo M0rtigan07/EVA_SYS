@@ -139,23 +139,16 @@ class EVASystem {
   }
 
   async sincronizarConTurso(usuario) {
-    console.log("Sincronizando historial desde Turso...");
-
     try {
-      // 1. Llamamos a tu endpoint existente 'historial.js' (GET)
-      // Este endpoint ya devuelve: SELECT * FROM historial_entrenamientos WHERE usuario = ?
       const res = await fetch(`/api/historial?usuario=${usuario}`);
+      if (!res.ok) throw new Error("Servidor no disponible");
+
       const historial = await res.json();
-
-      // 2. Guardamos la "fuente de verdad" en localStorage
-      // Si no tienes una clave específica, crea una llamada 'eva_historial_sync'
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
-
-      console.log("Sincronización completada. Datos recuperados:", historial.length);
-      return true;
-    } catch (error) {
-      console.error("Error al sincronizar:", error);
-      return false;
+      console.log("Sincronización exitosa.");
+    } catch (e) {
+      console.warn("No se pudo conectar a Turso. Trabajando en modo offline con datos locales.");
+      // EVA seguirá funcionando con lo que ya tenga en localStorage
     }
   }
 
@@ -523,6 +516,17 @@ class EVASystem {
   async init() {
 
     console.log("Iniciando EVA...");
+
+    // 1. Sincronización obligatoria al arrancar
+    const usuario = localStorage.getItem('eva_user');
+    if (usuario) {
+      await this.sincronizarConTurso(usuario);
+    }
+
+    // 2. Ahora que los datos están en localStorage, cargamos la UI
+    this.renderizarInterfaz();
+    this.iniciarCronometros();
+    this.hablar("Sistemas operativos. Bienvenido de nuevo, " + usuario);
 
     // Dentro de EVASystem, en el init
     window.addEventListener('online', () => {
