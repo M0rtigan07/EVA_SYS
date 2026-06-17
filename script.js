@@ -138,6 +138,27 @@ class EVASystem {
     }
   }
 
+  async sincronizarConTurso(usuario) {
+    console.log("Sincronizando historial desde Turso...");
+
+    try {
+      // 1. Llamamos a tu endpoint existente 'historial.js' (GET)
+      // Este endpoint ya devuelve: SELECT * FROM historial_entrenamientos WHERE usuario = ?
+      const res = await fetch(`/api/historial?usuario=${usuario}`);
+      const historial = await res.json();
+
+      // 2. Guardamos la "fuente de verdad" en localStorage
+      // Si no tienes una clave específica, crea una llamada 'eva_historial_sync'
+      localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
+
+      console.log("Sincronización completada. Datos recuperados:", historial.length);
+      return true;
+    } catch (error) {
+      console.error("Error al sincronizar:", error);
+      return false;
+    }
+  }
+
 
   // Mejora visual al iniciar login
 
@@ -157,10 +178,13 @@ class EVASystem {
       const res = await fetch(`/api/auth?nombre=${usuario}`);
       const data = await res.json();
 
+
+
       if (data.id_encontrado) {
         // EL USUARIO EXISTE PERO NO TENEMOS SU LLAVE (Falta el backup)
         this.hablar("Usuario encontrado. Por favor, sube tu archivo de backup.");
         await this.gestionarArchivoBackup(usuario); // Espera a que suba el archivo
+        await this.sincronizarConTurso(usuario);
         return;
       } else {
         // USUARIO NUEVO
@@ -179,7 +203,7 @@ class EVASystem {
       }
     }
 
-
+    await this.sincronizarConTurso(usuario);
 
 
     // 3. Ya tenemos credenciales (o las acabamos de obtener), validamos misión
