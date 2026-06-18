@@ -149,11 +149,17 @@ class EVASystem {
 
       const historial = await response.json();
 
+      historial[0].peso = this.peso;
+      historrial[0].racha = this.streak;
+
       // Guardamos en localStorage como "fuente de verdad local"
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
 
       console.log("Sincronización completada. Registros obtenidos:", historial.length);
       this.hablar(`SINCRONIZACION COMPLETA : Registros ${historial.length} actualizados`);
+      // Si el envío fue exitoso:
+      localStorage.removeItem('eva_pendientes_sync'); // Borramos la bandera
+      this.actualizarVisibilidadBotonSync(); // Ocultamos el botón
       return historial;
     } catch (error) {
       console.error("Error en sincronización:", error);
@@ -537,7 +543,7 @@ class EVASystem {
 
     // 2. Ahora que los datos están en localStorage, cargamos la UI
     //this.renderizarInterfaz();
-  //  this.iniciarCronometros();
+    //  this.iniciarCronometros();
     this.hablar("Sistemas operativos. Bienvenido de nuevo, " + usuario);
 
     // Dentro de EVASystem, en el init
@@ -801,6 +807,8 @@ class EVASystem {
     this.entrenamientoActivo = true
     document.getElementById('btn-start-cardio').style.display = "none";
     document.getElementById('btn-pause-cardio').style.display = "block"; // Mostrar pausa
+    document.getElementById('infoEntreno').style.display = "none";
+
 
     document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
     document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
@@ -964,6 +972,7 @@ class EVASystem {
     document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
     document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
     document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
+    document.getElementById('infoEntreno').style.display = "none";
 
 
     // --- AQUÍ APLICAMOS LA PROGRESIÓN ---
@@ -1181,6 +1190,14 @@ class EVASystem {
     this.entrenamientoActivo = false;
   }
 
+  actualizarVisibilidadBotonSync() {
+    const btn = document.getElementById('btn-sincronizar');
+    const hayPendientes = localStorage.getItem('eva_pendientes_sync') === 'true';
+
+    // Si hay pendientes, mostramos el botón; si no, lo ocultamos
+    btn.style.display = hayPendientes ? 'block' : 'none';
+  }
+
   saveToDB() {
     const pesoActual = this.peso;
     const fatigaActual = parseInt(document.getElementById('val-fatiga').innerText);
@@ -1219,6 +1236,15 @@ class EVASystem {
     localStorage.setItem('eva_ultimo_peso', pesoActual);
     localStorage.setItem('eva_enojada', this.estaEnojada);
     this.actualizarRacha();
+
+    // NUEVA LÍNEA: Marcamos que hay datos pendientes de sincronizar
+    localStorage.setItem('eva_pendientes_sync', 'true');
+
+    // Si tienes el método de visibilidad que propusimos antes, llámalo aquí:
+    if (typeof this.actualizarVisibilidadBotonSync === 'function') {
+      this.actualizarVisibilidadBotonSync();
+    }
+
   }
 
   updateCalendar() {
