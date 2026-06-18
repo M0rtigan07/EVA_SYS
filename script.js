@@ -153,6 +153,7 @@ class EVASystem {
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
 
       console.log("Sincronización completada. Registros obtenidos:", historial.length);
+      this.hablar(`SINCRONIZACION COMPLETA : Registros ${historial.length} actualizados`);
       return historial;
     } catch (error) {
       console.error("Error en sincronización:", error);
