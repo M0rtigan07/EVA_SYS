@@ -172,7 +172,8 @@
                         <span>BORRAR</span>
                     </button>
 
-                    <div id="backup" class="card" style="display: none; flex-direction: column; align-items: center; gap: 10px; border-color: var(--blue-tech);">
+                    <div id="backup" class="card"
+                        style="display: none; flex-direction: column; align-items: center; gap: 10px; border-color: var(--blue-tech);">
                         <input type="file" id="input-backup" accept=".txt">
                         <button id="btn-login-confirmar">Confirmar</button>
                     </div>
@@ -180,6 +181,17 @@
 
                 </div>
 
+                <button class="tool-btn" id="btn-sincronizar"
+                    onclick="EVA.sincronizarHistorial(localStorage.getItem('eva_user'))" title="Sincronizar con la nube"
+                    style="color: var(--hal-blue); border-color: rgba(50, 150, 255, 0.3); display: block;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    <span>SINCRONIZAR</span>
+                </button>
 
             </div>
 
