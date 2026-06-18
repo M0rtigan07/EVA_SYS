@@ -138,17 +138,26 @@ class EVASystem {
     }
   }
 
-  async sincronizarConTurso(usuario) {
+  async sincronizarHistorial(usuario) {
+    console.log("Iniciando sincronización con Turso...");
     try {
-      const res = await fetch(`/api/historial?usuario=${usuario}`);
-      if (!res.ok) throw new Error("Servidor no disponible");
+      const response = await fetch(`/api/historial?usuario=${encodeURIComponent(usuario)}`);
 
-      const historial = await res.json();
+      if (!response.ok) {
+        throw new Error("No se pudo conectar con la base de datos central.");
+      }
+
+      const historial = await response.json();
+
+      // Guardamos en localStorage como "fuente de verdad local"
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
-      console.log("Sincronización exitosa.");
-    } catch (e) {
-      console.warn("No se pudo conectar a Turso. Trabajando en modo offline con datos locales.");
-      // EVA seguirá funcionando con lo que ya tenga en localStorage
+
+      console.log("Sincronización completada. Registros obtenidos:", historial.length);
+      return historial;
+    } catch (error) {
+      console.error("Error en sincronización:", error);
+      // Si falla, EVA sigue trabajando con lo que ya tenga en localStorage (modo offline)
+      return JSON.parse(localStorage.getItem('eva_historial_sync') || '[]');
     }
   }
 
@@ -184,7 +193,7 @@ class EVASystem {
         const nuevaLlave = this.generarLlaveSegura();
 
         // Llamamos a la función que acabamos de crear
-        const registrado = await this.registrarUsuarioEnTurso(usuario, nuevaLlave);
+        //  const registrado = await this.registrarUsuarioEnTurso(usuario, nuevaLlave);
 
         if (registrado) {
           localStorage.setItem('eva_user', usuario);
@@ -196,7 +205,7 @@ class EVASystem {
       }
     }
 
-    await this.sincronizarConTurso(usuario);
+    //  await this.sincronizarConTurso(usuario);
 
 
     // 3. Ya tenemos credenciales (o las acabamos de obtener), validamos misión
@@ -517,11 +526,13 @@ class EVASystem {
 
     console.log("Iniciando EVA...");
 
-    // 1. Sincronización obligatoria al arrancar
     const usuario = localStorage.getItem('eva_user');
+
     if (usuario) {
-      await this.sincronizarConTurso(usuario);
+      // Ejecutamos el sincronismo ANTES de cualquier otra operación
+      await this.sincronizarHistorial(usuario);
     }
+
 
     // 2. Ahora que los datos están en localStorage, cargamos la UI
     this.renderizarInterfaz();
@@ -1158,7 +1169,7 @@ class EVASystem {
     localStorage.setItem('eva_last_date', hoy);
 
     // 3. Sincronización
-    this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.peso);
+    this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.streak, this.peso);
     // this.actualizarEstadoEVA(false);
 
     this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`);
@@ -1338,7 +1349,7 @@ class EVASystem {
 * Envía los datos del entrenamiento a la API de Vercel.
 * Se ejecuta en segundo plano sin bloquear la interfaz.
 */
-  async guardarDatosEnNube(tipo, modo, fatiga, peso) {
+  async guardarDatosEnNube(tipo, modo, fatiga, racha, peso) {
     //const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
     // 1. Datos que vamos a enviar
     const payload = {
@@ -1346,6 +1357,7 @@ class EVASystem {
       tipo: tipo,           // 'fuerza' o 'cardio'
       modo: modo,           // '3x5' o 'cronometrado'
       fatiga: fatiga,  // El nivel de fatiga
+      racha: racha,
       peso: peso       // El peso registrado
       // El dato numérico
     };

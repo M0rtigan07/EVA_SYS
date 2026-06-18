@@ -19,16 +19,17 @@ export default async function handler(req, res) {
         tipo TEXT,
         modo TEXT,
         fatiga INTEGER,
+        racha INTEGER,
         peso INTEGER,
         fecha TEXT
       )
     `);
 
     // 2. Insertamos el registro
-    const { usuario, tipo, modo, fatiga, peso } = req.body;
+    const { usuario, tipo, modo, fatiga, racha, peso } = req.body;
     await db.execute({
-      sql: `INSERT INTO historial_entrenamientos (usuario, tipo, modo, fatiga, peso, fecha) VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [usuario || 'Anonimo', tipo, modo, fatiga || 0, peso || 0, new Date().toISOString()]
+      sql: `INSERT INTO historial_entrenamientos (usuario, tipo, modo, fatiga, racha, peso, fecha) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [usuario || 'Anonimo', tipo, modo, fatiga || 0, racha || 0, peso || 0, new Date().toISOString()]
     });
 
     return res.status(200).json({ success: true });
