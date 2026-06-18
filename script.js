@@ -536,7 +536,7 @@ class EVASystem {
 
     // 2. Ahora que los datos están en localStorage, cargamos la UI
     //this.renderizarInterfaz();
-    this.iniciarCronometros();
+  //  this.iniciarCronometros();
     this.hablar("Sistemas operativos. Bienvenido de nuevo, " + usuario);
 
     // Dentro de EVASystem, en el init
