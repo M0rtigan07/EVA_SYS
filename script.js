@@ -193,7 +193,7 @@ class EVASystem {
         const nuevaLlave = this.generarLlaveSegura();
 
         // Llamamos a la función que acabamos de crear
-        //  const registrado = await this.registrarUsuarioEnTurso(usuario, nuevaLlave);
+        const registrado = await this.registrarUsuarioEnTurso(usuario, nuevaLlave);
 
         if (registrado) {
           localStorage.setItem('eva_user', usuario);
@@ -528,11 +528,11 @@ class EVASystem {
 
     const usuario = localStorage.getItem('eva_user');
 
-   /*  if (usuario) {
-      // Ejecutamos el sincronismo ANTES de cualquier otra operación
-      await this.sincronizarHistorial(usuario);
-    }
- */
+    /*  if (usuario) {
+       // Ejecutamos el sincronismo ANTES de cualquier otra operación
+       await this.sincronizarHistorial(usuario);
+     }
+  */
 
     // 2. Ahora que los datos están en localStorage, cargamos la UI
     this.renderizarInterfaz();
