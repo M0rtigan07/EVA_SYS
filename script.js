@@ -528,11 +528,11 @@ class EVASystem {
 
     const usuario = localStorage.getItem('eva_user');
 
-    if (usuario) {
+   /*  if (usuario) {
       // Ejecutamos el sincronismo ANTES de cualquier otra operación
       await this.sincronizarHistorial(usuario);
     }
-
+ */
 
     // 2. Ahora que los datos están en localStorage, cargamos la UI
     this.renderizarInterfaz();
