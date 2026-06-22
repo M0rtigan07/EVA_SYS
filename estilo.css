@@ -238,64 +238,7 @@ body {
     box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
 }
 
-/* ========================================================
-   🦾 TAMAÑO RESPONSIVE CON LA CLASE ACTUAL: .item-fuerza
-   ======================================================== */
 
-/* --- 💻 PANTALLAS GRANDES / PC (Por defecto) --- */
-.item-fuerza {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(26, 26, 26, 0.5);
-    border: 1px solid #1a1a1a;
-    border-radius: 6px;
-
-    /* Medidas para que respire bien en PC */
-    width: 90% !important;
-    /* Margen a los lados en el panel */
-    margin: 12px auto !important;
-    /* Centrada y separada verticalmente */
-    padding: 14px 16px !important;
-    /* Espacio interno de seguridad */
-    box-sizing: border-box !important;
-}
-
-/* --- 📱 PARA TU TABLET (Hasta 1024px) --- */
-@media (max-width: 1024px) {
-    .item-fuerza {
-        width: 86% !important;
-        /* 🎯 Se estrecha para dejar canales de aire limpios a los lados en la tablet */
-        padding: 22px 18px !important;
-        /* La tarjeta se hace más alta y gorda por dentro para que se vea limpia */
-        margin: 18px auto !important;
-        /* Más separación vertical entre las tarjetas */
-        font-size: 1.15rem !important;
-        /* Texto más grande para leerlo de pie entrenando */
-    }
-
-    .item-fuerza input[type="checkbox"] {
-        width: 26px !important;
-        /* Checkbox grande, comodísimo para pulsar con el dedo */
-        height: 26px !important;
-    }
-}
-
-/* --- 📲 PARA MÓVILES (Hasta 600px) --- */
-@media (max-width: 600px) {
-    .item-fuerza {
-        width: 92% !important;
-        /* Aprovecha mejor el ancho de la pantalla pequeña */
-        padding: 15px 12px !important;
-        margin: 10px auto !important;
-        font-size: 1rem !important;
-    }
-
-    .item-fuerza input[type="checkbox"] {
-        width: 22px !important;
-        height: 22px !important;
-    }
-}
 
 /* Estructura de tarjetas individuales por paso */
 .ejercicio-paso {
