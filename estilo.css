@@ -210,8 +210,40 @@ body {
     margin-top: 5px;
 }
 
-/* --- 💻 TAMAÑO DE LA TARJETA EN PC --- */
-#lista-ejercicios>div {
+.item-fuerza {
+    text-align: center;
+    width: 100%;
+}
+
+.item-fuerza h3 {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    color: #fff;
+}
+
+.item-fuerza p {
+    font-size: 1.3rem;
+    color: var(--blue-tech);
+    font-family: monospace;
+    margin-bottom: 30px;
+}
+
+.item-fuerza button {
+    padding: 20px 50px;
+    font-size: 1.6rem;
+    font-weight: bold;
+    width: 100%;
+    max-width: 300px;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+/* ========================================================
+   🦾 TAMAÑO RESPONSIVE CON LA CLASE ACTUAL: .item-fuerza
+   ======================================================== */
+
+/* --- 💻 PANTALLAS GRANDES / PC (Por defecto) --- */
+.item-fuerza {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -219,45 +251,49 @@ body {
     border: 1px solid #1a1a1a;
     border-radius: 6px;
 
-    /* 🎯 Ajustes de tamaño base */
+    /* Medidas para que respire bien en PC */
     width: 90% !important;
-    /* Deja un pequeño margen a los lados */
+    /* Margen a los lados en el panel */
     margin: 12px auto !important;
-    /* Centra la tarjeta y la separa de las otras */
+    /* Centrada y separada verticalmente */
     padding: 14px 16px !important;
-    /* Aire interno para el texto y check */
+    /* Espacio interno de seguridad */
     box-sizing: border-box !important;
-    /* Evita que se rompa el tamaño */
 }
 
-/* --- 📱 OPTIMIZACIÓN DE TAMAÑO PARA TU TABLETS (Hasta 1024px) --- */
+/* --- 📱 PARA TU TABLET (Hasta 1024px) --- */
 @media (max-width: 1024px) {
-    #lista-ejercicios>div {
+    .item-fuerza {
         width: 86% !important;
-        /* Más estrecha para que tenga mucho aire a los lados en la tablet */
+        /* 🎯 Se estrecha para dejar canales de aire limpios a los lados en la tablet */
         padding: 22px 18px !important;
-        /* Tarjeta más alta por dentro; comodísima para leer entrenando */
+        /* La tarjeta se hace más alta y gorda por dentro para que se vea limpia */
         margin: 18px auto !important;
-        /* Más separación vertical entre bloques */
+        /* Más separación vertical entre las tarjetas */
         font-size: 1.15rem !important;
-        /* Texto más grande para la pantalla de la tablet */
+        /* Texto más grande para leerlo de pie entrenando */
     }
 
-    #lista-ejercicios>div input[type="checkbox"] {
+    .item-fuerza input[type="checkbox"] {
         width: 26px !important;
-        /* Checkbox grande para el dedo */
+        /* Checkbox grande, comodísimo para pulsar con el dedo */
         height: 26px !important;
     }
 }
 
-/* --- 📲 OPTIMIZACIÓN PARA MÓVILES (Hasta 600px) --- */
+/* --- 📲 PARA MÓVILES (Hasta 600px) --- */
 @media (max-width: 600px) {
-    #lista-ejercicios>div {
+    .item-fuerza {
         width: 92% !important;
-        /* Aprovecha mejor el ancho en pantallas pequeñas */
+        /* Aprovecha mejor el ancho de la pantalla pequeña */
         padding: 15px 12px !important;
         margin: 10px auto !important;
         font-size: 1rem !important;
+    }
+
+    .item-fuerza input[type="checkbox"] {
+        width: 22px !important;
+        height: 22px !important;
     }
 }
 
