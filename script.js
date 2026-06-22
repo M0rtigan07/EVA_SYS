@@ -825,6 +825,8 @@ class EVASystem {
       this.estado = "RECUPERACION";
     } else {
       document.getElementById('estado').innerText = "MOD: PRO";
+      document.getElementById('estado').style.color = "green";
+
       this.estado = "PROGRESION";
     }
 
@@ -1022,11 +1024,12 @@ class EVASystem {
 
     // Si la racha es baja, EVA avisa que estamos en modo conservador
     if (this.streak < 3) {
-      document.getElementById('estado').innerText = "MODO: RECUPERACIÓN";
+      document.getElementById('estado').innerText = "MOD: INICIO";
       document.getElementById('estado').style.color = "yellow";
       this.estado = "RECUPERACION";
     } else {
-      document.getElementById('estado').innerText = "MODO: PROGRESIÓN";
+      document.getElementById('estado').innerText = "MOD: PRO";
+      document.getElementById('estado').style.color = "green";
       this.estado = "PROGRESION";
     }
 
