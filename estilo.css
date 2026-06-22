@@ -478,3 +478,87 @@ body {
     min-height: 40px;
     text-align: center;
 }
+
+/* ========================================================
+   🦾 ADAPTACIÓN DE LA TARJETA .item-fuerza MULTIDISPOSITIVO
+   ======================================================== */
+
+/* --- 💻 1. DISEÑO BASE (PC / PANTALLAS GRANDES) --- */
+.item-fuerza {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(26, 26, 26, 0.5);
+    border: 1px solid #1a1a1a;
+    border-radius: 6px;
+
+    /* Ajustes para que respire en el escritorio */
+    width: 90% !important;
+    /* No se pega a los lados */
+    margin: 10px auto !important;
+    /* Centrada y separada de otras */
+    padding: 12px 16px !important;
+    /* Espacio interno para el texto */
+    box-sizing: border-box !important;
+}
+
+/* El texto de tu ejercicio */
+.item-fuerza {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* El checkbox */
+.item-fuerza input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #00ff88;
+}
+
+
+/* --- 📱 2. AJUSTE PARA TU TABLET (Hasta 1024px) --- */
+@media (max-width: 1024px) {
+    .item-fuerza {
+        width: 86% !important;
+        /* 🎯 Contiene la tarjeta al centro, dejando aire a los lados */
+        padding: 20px 16px !important;
+        /* Le da grosor vertical para que no se vea aplastada */
+        margin: 16px auto !important;
+        /* Más separación entre tarjetas arriba y abajo */
+    }
+
+    /* Agranda un poco la letra en la tablet para leerla bien de lejos */
+    .item-fuerza {
+        font-size: 1.15rem !important;
+    }
+
+    /* El checkbox se hace más grande para que no tengas que apuntar milimétricamente */
+    .item-fuerza input[type="checkbox"] {
+        width: 26px !important;
+        height: 26px !important;
+        flex-shrink: 0 !important;
+        /* Evita que el cuadro se deforme si el texto es largo */
+    }
+}
+
+
+/* --- 📲 3. AJUSTE PARA MÓVILES (Hasta 600px) --- */
+@media (max-width: 600px) {
+    .item-fuerza {
+        width: 92% !important;
+        /* Aprovecha un poco más el espacio en pantallas pequeñas */
+        padding: 14px 12px !important;
+        margin: 10px auto !important;
+    }
+
+    .item-fuerza {
+        font-size: 0.95rem !important;
+    }
+
+    .item-fuerza input[type="checkbox"] {
+        width: 22px !important;
+        height: 22px !important;
+    }
+}
