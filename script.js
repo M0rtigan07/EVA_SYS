@@ -1100,9 +1100,9 @@ class EVASystem {
     const lista = document.getElementById('lista-ejercicios');
     if (lista) {
       lista.innerHTML = `
-                <div style="text-align: center; padding: 8px; animation: fadeIn 0.5s ease;">
-                    <h2 style="color: #00ff88; font-size: 1rem; margin-bottom: 10px;">¡RUTINA COMPLETADA!</h2>
-                    <p style="color: #ccc; font-size: 0.5rem;">Buen trabajo, ${this.user}. Has superado todos los ejercicios.</p>
+                <div style="text-align: center; padding: 5px; animation: fadeIn 0.5s ease;">
+                    <h2 style="color: #00ff88; font-size: 1.2rem; margin-bottom: 5px;">¡RUTINA COMPLETADA!</h2>
+                    <p style="color: #ccc; font-size: 1rem;">Buen trabajo, <span style="color: var(--blue-tech)"> ${this.user} </span>. Has superado todos los ejercicios.</p>
                 </div>
             `;
     }
