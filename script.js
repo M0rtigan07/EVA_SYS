@@ -1804,7 +1804,7 @@ document.getElementById('btn-guardar-peso').addEventListener('click', () => {
 
      const infoPeso = document.getElementById('display-peso-kg');
 
-    const pesoTxt = localStorage.getItem('eva_ultimo_peso');
+    const pesoTxt = localStorage.getItem('eva_peso_usuario');
 
     infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
 
