@@ -216,14 +216,14 @@ body {
 }
 
 .item-fuerza h3 {
-    font-size: 2rem;
+    font-size: 1.5rem;
     margin-bottom: 15px;
     text-transform: uppercase;
     color: #fff;
 }
 
 .item-fuerza p {
-    font-size: 1.3rem;
+    font-size: 1rem;
     color: var(--blue-tech);
     font-family: monospace;
     margin-bottom: 30px;
@@ -231,7 +231,7 @@ body {
 
 .item-fuerza button {
     padding: 20px 50px;
-    font-size: 1.6rem;
+    font-size: 1rem;
     font-weight: bold;
     width: 100%;
     max-width: 300px;
