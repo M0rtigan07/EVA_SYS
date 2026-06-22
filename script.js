@@ -1802,12 +1802,12 @@ document.getElementById('btn-guardar-peso').addEventListener('click', () => {
     // 2. Persistir en localStorage
     localStorage.setItem('eva_ultimo_peso', nuevoPeso.toString());
 
-     const infoPeso = document.getElementById('display-peso-kg');
+    /*  const infoPeso = document.getElementById('display-peso-kg');
 
     const pesoTxt = localStorage.getItem('eva_peso_usuario');
 
     infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
-
+ */
     // 3. Ejecutar la lógica de reacción
     this.updateLogic();
 
