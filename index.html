@@ -29,18 +29,6 @@
                 <div id="display-rutina" style="color:var(--blue-tech); font-weight:bold; font-size:1.1rem;">--</div>
             </div>
 
-            <div id="fatigue-module" class="side-module card" style="display:none;border-left-color: green;">
-                <div class="module-title">ESTADO FÍSICO</div>
-                <div style="font-size: 24px; color: var(--blue-tech); text-align: center;">
-                    FATIGA: <span id="val-fatiga">?</span> / 8
-                </div>
-                <div class="fatiga-controls"
-                    style="display: flex; justify-content: center; gap: 5px; margin-top: 10px;">
-                    <button onclick="document.getElementById('val-fatiga').innerText = '1'" class="tool-btn">1</button>
-                    <button onclick="document.getElementById('val-fatiga').innerText = '4'" class="tool-btn">4</button>
-                    <button onclick="document.getElementById('val-fatiga').innerText = '8'" class="tool-btn">8</button>
-                </div>
-            </div>
 
             <div id="cardio-session-box" class="card" style="display:none; border-left-color: #ffd700;">
                 <p style="font-size:0.6rem; color:#ffd700; margin:0;">ENTRENAMIENTO DE CARDIO ACTIVO</p>
@@ -128,6 +116,21 @@
                 </div>
 
 
+                <div id="fatigue-module" class="side-module card" style="display:none;border-left-color: green;">
+                    <div class="module-title">ESTADO FÍSICO</div>
+                    <div style="font-size: 24px; color: var(--blue-tech); text-align: center;">
+                        FATIGA: <span id="val-fatiga">?</span> / 8
+                    </div>
+                    <div class="fatiga-controls"
+                        style="display: flex; justify-content: center; gap: 5px; margin-top: 10px;">
+                        <button onclick="document.getElementById('val-fatiga').innerText = '1'"
+                            class="tool-btn">1</button>
+                        <button onclick="document.getElementById('val-fatiga').innerText = '4'"
+                            class="tool-btn">4</button>
+                        <button onclick="document.getElementById('val-fatiga').innerText = '8'"
+                            class="tool-btn">8</button>
+                    </div>
+                </div>
 
 
                 <!--    <button class="btn-tech" id="btn-power" onclick="EVA.iniciarSesion()"
