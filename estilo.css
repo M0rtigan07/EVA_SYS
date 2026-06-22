@@ -194,6 +194,9 @@ body {
     /* Evita que el padding sume tamaño extra y rompa el layout */
 }
 
+
+
+
 /* 🦾 DISEÑO EN CARRUSEL TÁCTIL PARA EJERCICIOS DE FUERZA */
 #lista-ejercicios {
     width: 85%;
@@ -204,7 +207,7 @@ body {
     justify-content: center;
     overflow: hidden;
     /* Adiós al scroll molesto en la tablet */
-    margin-top: 15px;
+    margin-top: 5px;
 }
 
 /* Estructura de tarjetas individuales por paso */
@@ -444,4 +447,58 @@ body {
     color: var(--blue-tech);
     min-height: 40px;
     text-align: center;
+}
+
+/* ========================================================
+   🦾 OPTIMIZACIÓN DE TARJETAS DE FUERZA (TABLET Y MÓVIL)
+   ======================================================== */
+
+.exercise-item {
+    /* Tu script.js usa display:none/flex, aseguramos que mantenga flex al activarse */
+    display: flex !important;
+
+    /* Diseño estilizado de la tarjeta */
+    background: rgba(14, 14, 14, 0.95) !important;
+    border: 1px solid rgba(0, 212, 255, 0.25) !important;
+    border-left: 4px solid var(--blue-tech) !important;
+    /* Línea neón a la izquierda */
+    border-radius: 8px !important;
+
+    /* Separación para que no se pegue a los bordes de la tablet */
+    margin: 12px auto !important;
+    padding: 18px 15px !important;
+    /* Aire interno para el texto */
+    width: 94% !important;
+    /* Centrado dentro del panel lateral */
+    box-sizing: border-box !important;
+
+    /* Distribución interna del texto y el checkbox */
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 15px !important;
+
+    /* Look Cyberpunk */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 🎯 Estilo estricto para el Texto que mete tu JS */
+.exercise-item {
+    font-size: 1rem !important;
+    font-weight: bold !important;
+    color: #ffffff !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+}
+
+/* 🎯 Estilo para el Checkbox que mete tu JS */
+.exercise-item input[type="checkbox"] {
+    width: 26px !important;
+    /* Tamaño táctil ideal para pulsar con el dedo */
+    height: 26px !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    accent-color: #00ff66 !important;
+    /* Se vuelve verde neón al completarlo */
+    flex-shrink: 0 !important;
+    /* Evita que el checkbox se aplaste si el texto es muy largo */
 }
