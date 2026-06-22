@@ -196,7 +196,7 @@ body {
 
 /* 🦾 DISEÑO EN CARRUSEL TÁCTIL PARA EJERCICIOS DE FUERZA */
 #lista-ejercicios {
-    width: 90%;
+    width: 85%;
     display: none;
     /* Nace totalmente oculto hasta presionar "Iniciar Entrenamiento" */
     flex-direction: column;
@@ -259,16 +259,7 @@ body {
     justify-content: center;
 }
 
-#btn-hablar {
-    background: rgba(0, 212, 255, 0.2);
-    border: 2px solid var(--blue-tech);
-    padding: 15px 30px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: 0.3s;
-    border-radius: 50px;
-    margin: 10px;
-}
+
 
 #btn-hablar.escuchando {
     background: rgba(255, 50, 50, 0.4);
