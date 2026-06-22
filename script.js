@@ -975,6 +975,7 @@ class EVASystem {
     document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
     document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
     document.getElementById('infoEntreno').style.display = "none";
+    document.getElementById('fechaRutina').style.display = "none";
 
 
     // --- AQUÍ APLICAMOS LA PROGRESIÓN ---
