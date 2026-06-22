@@ -210,6 +210,57 @@ body {
     margin-top: 5px;
 }
 
+/* --- 💻 TAMAÑO DE LA TARJETA EN PC --- */
+#lista-ejercicios>div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(26, 26, 26, 0.5);
+    border: 1px solid #1a1a1a;
+    border-radius: 6px;
+
+    /* 🎯 Ajustes de tamaño base */
+    width: 90% !important;
+    /* Deja un pequeño margen a los lados */
+    margin: 12px auto !important;
+    /* Centra la tarjeta y la separa de las otras */
+    padding: 14px 16px !important;
+    /* Aire interno para el texto y check */
+    box-sizing: border-box !important;
+    /* Evita que se rompa el tamaño */
+}
+
+/* --- 📱 OPTIMIZACIÓN DE TAMAÑO PARA TU TABLETS (Hasta 1024px) --- */
+@media (max-width: 1024px) {
+    #lista-ejercicios>div {
+        width: 86% !important;
+        /* Más estrecha para que tenga mucho aire a los lados en la tablet */
+        padding: 22px 18px !important;
+        /* Tarjeta más alta por dentro; comodísima para leer entrenando */
+        margin: 18px auto !important;
+        /* Más separación vertical entre bloques */
+        font-size: 1.15rem !important;
+        /* Texto más grande para la pantalla de la tablet */
+    }
+
+    #lista-ejercicios>div input[type="checkbox"] {
+        width: 26px !important;
+        /* Checkbox grande para el dedo */
+        height: 26px !important;
+    }
+}
+
+/* --- 📲 OPTIMIZACIÓN PARA MÓVILES (Hasta 600px) --- */
+@media (max-width: 600px) {
+    #lista-ejercicios>div {
+        width: 92% !important;
+        /* Aprovecha mejor el ancho en pantallas pequeñas */
+        padding: 15px 12px !important;
+        margin: 10px auto !important;
+        font-size: 1rem !important;
+    }
+}
+
 /* Estructura de tarjetas individuales por paso */
 .ejercicio-paso {
     display: none;
@@ -448,4 +499,3 @@ body {
     min-height: 40px;
     text-align: center;
 }
-
