@@ -480,84 +480,79 @@ body {
 }
 
 /* ========================================================
-   🦾 ADAPTACIÓN DE LA TARJETA .item-fuerza MULTIDISPOSITIVO
+   🦾 CONTROL RESPONSIVO TOTAL: CLASE .ejercicio-paso
    ======================================================== */
 
-/* --- 💻 1. DISEÑO BASE (PC / PANTALLAS GRANDES) --- */
-.item-fuerza {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(26, 26, 26, 0.5);
-    border: 1px solid #1a1a1a;
-    border-radius: 6px;
+/* --- 💻 1. PANTALLAS GRANDES / PC (Por defecto) --- */
+.ejercicio-paso {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: rgba(26, 26, 26, 0.5) !important;
+    border: 1px solid #1a1a1a !important;
+    border-radius: 6px !important;
 
-    /* Ajustes para que respire en el escritorio */
+    /* Tamaño base para el monitor */
     width: 90% !important;
-    /* No se pega a los lados */
     margin: 10px auto !important;
-    /* Centrada y separada de otras */
+    /* Centrada y separada de las demás */
     padding: 12px 16px !important;
-    /* Espacio interno para el texto */
+    /* Espacio interno para que el texto no muerda los bordes */
     box-sizing: border-box !important;
+
+    /* Tipografía nativa */
+    color: #ffffff !important;
+    font-size: 1rem !important;
+    font-weight: bold !important;
 }
 
-/* El texto de tu ejercicio */
-.item-fuerza {
-    color: #ffffff;
-    font-size: 1rem;
-    font-weight: bold;
-}
-
-/* El checkbox */
-.item-fuerza input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: #00ff88;
+/* El checkbox del paso actual en PC */
+.ejercicio-paso input[type="checkbox"] {
+    width: 20px !important;
+    height: 20px !important;
+    cursor: pointer !important;
+    accent-color: #00ff88 !important;
 }
 
 
-/* --- 📱 2. AJUSTE PARA TU TABLET (Hasta 1024px) --- */
+/* --- 📱 2. OPTIMIZACIÓN REAL PARA TU TABLET (Hasta 1024px) --- */
 @media (max-width: 1024px) {
-    .item-fuerza {
+    .ejercicio-paso {
         width: 86% !important;
-        /* 🎯 Contiene la tarjeta al centro, dejando aire a los lados */
+        /* 🎯 Contiene la tarjeta al centro y te deja los canales de aire a los lados */
         padding: 20px 16px !important;
-        /* Le da grosor vertical para que no se vea aplastada */
+        /* Le da grosor por dentro para que respire verticalmente */
         margin: 16px auto !important;
-        /* Más separación entre tarjetas arriba y abajo */
-    }
-
-    /* Agranda un poco la letra en la tablet para leerla bien de lejos */
-    .item-fuerza {
+        /* Separa bien una tarjeta de la otra hacia abajo */
         font-size: 1.15rem !important;
+        /* Letra más grande y nítida para verla mientras entrenas */
+        border-radius: 10px !important;
+        /* Esquinas más pulidas en pantalla táctil */
     }
 
-    /* El checkbox se hace más grande para que no tengas que apuntar milimétricamente */
-    .item-fuerza input[type="checkbox"] {
+    /* El botón de check masivo para la tablet */
+    .ejercicio-paso input[type="checkbox"] {
         width: 26px !important;
+        /* Lo agrandamos para que le des con el dedo sin fallar */
         height: 26px !important;
         flex-shrink: 0 !important;
-        /* Evita que el cuadro se deforme si el texto es largo */
+        /* Evita que la tablet te lo aplaste si el nombre del ejercicio es largo */
+        margin-left: 10px !important;
     }
 }
 
 
 /* --- 📲 3. AJUSTE PARA MÓVILES (Hasta 600px) --- */
 @media (max-width: 600px) {
-    .item-fuerza {
+    .ejercicio-paso {
         width: 92% !important;
-        /* Aprovecha un poco más el espacio en pantallas pequeñas */
+        /* En móviles estrechos aprovecha más el ancho de pantalla */
         padding: 14px 12px !important;
         margin: 10px auto !important;
-    }
-
-    .item-fuerza {
         font-size: 0.95rem !important;
     }
 
-    .item-fuerza input[type="checkbox"] {
+    .ejercicio-paso input[type="checkbox"] {
         width: 22px !important;
         height: 22px !important;
     }
