@@ -579,7 +579,7 @@ class EVASystem {
 
     const infoPeso = document.getElementById('display-peso-kg');
 
-    const pesoTxt = localStorage.getItem('eva_ultimo_peso') || "0";
+    const pesoTxt = localStorage.getItem('eva_ultimo_peso') || "70";
 
     infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
 
