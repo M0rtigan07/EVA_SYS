@@ -196,7 +196,7 @@ body {
 
 /* 🦾 DISEÑO EN CARRUSEL TÁCTIL PARA EJERCICIOS DE FUERZA */
 #lista-ejercicios {
-    width: 100%;
+    width: 90%;
     display: none;
     /* Nace totalmente oculto hasta presionar "Iniciar Entrenamiento" */
     flex-direction: column;
@@ -211,7 +211,7 @@ body {
 .ejercicio-paso {
     display: none;
     /* Oculto por defecto, se maneja dinámicamente por JS con .style.display */
-    width: 100%;
+    width: 90%;
     background: rgba(10, 10, 10, 0.85);
     border: 2px solid var(--blue-tech);
     padding: 30px 20px;
