@@ -1043,9 +1043,9 @@ class EVASystem {
 
       div.innerHTML = `
                 <div style="text-align: center; width: 100%;">
-                    <h2 style="font-size: 2.2rem; margin-bottom: 15px; text-transform: uppercase; color: #fff;">${ex.replace('_', ' ')}</h2>
-                    <p style="font-size: 1.6rem; color: var(--blue-tech); font-family: monospace; margin-bottom: 30px;">
-                        > ${series} SERIES x ${reps} REPS
+                    <h3 style="font-size: 2rem; margin-bottom: 15px; text-transform: uppercase; color: #fff;">${ex.replace('_', ' ')}</h3>
+                    <p style="font-size: 1.3rem; color: var(--blue-tech); font-family: monospace; margin-bottom: 30px;">
+                         ${series} SERIES x ${reps} REPS
                     </p>
                     <button onclick="EVA.nextStep(${i})" class="tool-btn" style="padding: 20px 50px; font-size: 1.6rem; font-weight: bold; width: 100%; max-width: 300px; box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);">
                         EJERCICIO HECHO
