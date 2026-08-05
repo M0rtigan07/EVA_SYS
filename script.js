@@ -149,10 +149,10 @@ class EVASystem {
 
       const historial = await response.json();
 
-      
 
-     /*  historial[0].peso = this.peso;
-      historial[0].racha = this.streak; */
+
+      /*  historial[0].peso = this.peso;
+       historial[0].racha = this.streak; */
 
       // Guardamos en localStorage como "fuente de verdad local"
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
@@ -187,15 +187,16 @@ class EVASystem {
 
     // Actualizar rango (si lo usas)
     const rangoDisplay = document.getElementById("display-rango");
- /*    if (rangoDisplay) {
-      rangoDisplay.textContent = registro.racha >= 5 ? "SOLDADO" : "RECLUTA";
-    } */
+    /*    if (rangoDisplay) {
+         rangoDisplay.textContent = registro.racha >= 5 ? "SOLDADO" : "RECLUTA";
+       } */
 
     // Actualizar peso
     const pesoDisplay = document.getElementById("display-peso");
     if (pesoDisplay) {
       pesoDisplay.textContent = `${registro.peso} kg`;
-      this.peso = registro.peso; // Actualizamos la propiedad de la clase
+    //  this.peso = registro.peso; // Actualizamos la propiedad de la clase
+      localStorage.setItem('eva_peso_usuario', registro.peso.toString());
     }
   }
 
