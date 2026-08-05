@@ -156,6 +156,10 @@ class EVASystem {
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
 
       console.log("Sincronización completada. Registros obtenidos:", historial.length);
+
+      this.actualizarInterfazDesdeHistorial(historial);
+
+
       this.hablar(`SINCRONIZACION COMPLETA : Registros ${historial.length} actualizados`);
       // Si el envío fue exitoso:
       localStorage.removeItem('eva_pendientes_sync'); // Borramos la bandera
@@ -167,6 +171,31 @@ class EVASystem {
       return JSON.parse(localStorage.getItem('eva_historial_sync') || '[]');
     }
   }
+
+  actualizarInterfazDesdeHistorial(historial) {
+    if (!historial || historial.length === 0) return;
+
+    const registro = historial[0];
+
+    // Actualizar racha
+    const rachaDisplay = document.getElementById("display-racha");
+    if (rachaDisplay) {
+      rachaDisplay.textContent = `${registro.racha} DÍAS`;
+    }
+
+    // Actualizar rango (si lo usas)
+    const rangoDisplay = document.getElementById("display-rango");
+    if (rangoDisplay) {
+      rangoDisplay.textContent = registro.racha >= 5 ? "SOLDADO" : "RECLUTA";
+    }
+
+    // Actualizar peso
+    const pesoDisplay = document.getElementById("display-peso");
+    if (pesoDisplay) {
+      pesoDisplay.textContent = `${registro.peso} kg`;
+    }
+  }
+
 
 
   // Mejora visual al iniciar login
