@@ -1473,6 +1473,7 @@ class EVASystem {
     try {
       const respuesta = await fetch(`/api/historial?usuario=${encodeURIComponent(usuario)}`);
       const datosNube = await respuesta.json();
+      console.log("EVA: Datos descargados de la nube:", datosNube);
 
       if (respuesta.ok) {
         // Guardamos el historial completo en un objeto local de la app
