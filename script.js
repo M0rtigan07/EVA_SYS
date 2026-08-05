@@ -149,8 +149,8 @@ class EVASystem {
 
       const historial = await response.json();
 
-      historial[0].peso = this.peso;
-      historial[0].racha = this.streak;
+     /*  historial[0].peso = this.peso;
+      historial[0].racha = this.streak; */
 
       // Guardamos en localStorage como "fuente de verdad local"
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
