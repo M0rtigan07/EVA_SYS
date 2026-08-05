@@ -149,6 +149,8 @@ class EVASystem {
 
       const historial = await response.json();
 
+      
+
      /*  historial[0].peso = this.peso;
       historial[0].racha = this.streak; */
 
@@ -185,14 +187,15 @@ class EVASystem {
 
     // Actualizar rango (si lo usas)
     const rangoDisplay = document.getElementById("display-rango");
-    if (rangoDisplay) {
+ /*    if (rangoDisplay) {
       rangoDisplay.textContent = registro.racha >= 5 ? "SOLDADO" : "RECLUTA";
-    }
+    } */
 
     // Actualizar peso
     const pesoDisplay = document.getElementById("display-peso");
     if (pesoDisplay) {
       pesoDisplay.textContent = `${registro.peso} kg`;
+      this.peso = registro.peso; // Actualizamos la propiedad de la clase
     }
   }
 
