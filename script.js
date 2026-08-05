@@ -195,7 +195,7 @@ class EVASystem {
     const pesoDisplay = document.getElementById("display-peso");
     if (pesoDisplay) {
       pesoDisplay.textContent = `${registro.peso} kg`;
-    //  this.peso = registro.peso; // Actualizamos la propiedad de la clase
+      this.peso = registro.peso; // Actualizamos la propiedad de la clase
       localStorage.setItem('eva_peso_usuario', registro.peso.toString());
     }
   }
