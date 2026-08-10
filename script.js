@@ -186,7 +186,7 @@ class EVASystem {
     }
 
     // Actualizar rango (si lo usas)
-    const rangoDisplay = document.getElementById("display-rango");
+  //  const rangoDisplay = document.getElementById("display-rango");
     /*    if (rangoDisplay) {
          rangoDisplay.textContent = registro.racha >= 5 ? "SOLDADO" : "RECLUTA";
        } */
