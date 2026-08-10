@@ -573,52 +573,12 @@ class EVASystem {
   }
 
 
-  actualizarIndicadorRed() {
-    const badge = document.getElementById('red-status-indicator');
-    const texto = document.getElementById('red-status-text');
-
-    if (!badge || !texto) return;
-
-    if (navigator.onLine) {
-      badge.className = 'status-badge online';
-      texto.innerText = 'ONLINE';
-    } else {
-      badge.className = 'status-badge offline';
-      texto.innerText = 'OFFLINE';
-    }
-  }
-
-  iniciarDetectoresRed() {
-    // Estado inicial
-    this.actualizarIndicadorRed();
-
-    // Escuchar cuando se recupera la conexión
-    window.addEventListener('online', () => {
-      this.actualizarIndicadorRed();
-      this.hablar("Conexión restaurada. Sincronizando datos con la nube...");
-
-      // Al volver a estar online, intentamos enviar la cola offline si existe
-      if (typeof this.sincronizarConTurso === 'function') {
-        this.sincronizarConTurso();
-      }
-
-      // Y actualizamos visibilidad del botón
-      this.actualizarVisibilidadBotonSync();
-    });
-
-    // Escuchar cuando se pierde la conexión
-    window.addEventListener('offline', () => {
-      this.actualizarIndicadorRed();
-      this.hablar("Atención: Conexión a la red perdida. Pasando a modo almacenamiento local.");
-    });
-  }
-
-
+ 
 
 
   async init() {
 
-    this.iniciarDetectoresRed();
+   
 
     console.log("Iniciando EVA...");
 
