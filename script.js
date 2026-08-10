@@ -138,6 +138,7 @@ class EVASystem {
     }
   }
 
+
   async sincronizarHistorial(usuario) {
     console.log("Iniciando sincronización con Turso...");
     try {
@@ -149,27 +150,24 @@ class EVASystem {
 
       const historial = await response.json();
 
-
-
-      /*  historial[0].peso = this.peso;
-       historial[0].racha = this.streak; */
-
-      // Guardamos en localStorage como "fuente de verdad local"
+      // Guardamos el historial localmente
       localStorage.setItem('eva_historial_sync', JSON.stringify(historial));
 
       console.log("Sincronización completada. Registros obtenidos:", historial.length);
 
+      // Actualizamos tanto la interfaz como las propiedades internas
       this.actualizarInterfazDesdeHistorial(historial);
 
+      this.hablar(`SINCRONIZACION COMPLETA: Registros ${historial.length} actualizados`);
 
-      this.hablar(`SINCRONIZACION COMPLETA : Registros ${historial.length} actualizados`);
-      // Si el envío fue exitoso:
-      localStorage.removeItem('eva_pendientes_sync'); // Borramos la bandera
-      this.actualizarVisibilidadBotonSync(); // Ocultamos el botón
+      // Si hay datos offline en la cola de envío, los procesamos
+      if (typeof this.sincronizarConTurso === 'function') {
+        await this.sincronizarConTurso();
+      }
+
       return historial;
     } catch (error) {
       console.error("Error en sincronización:", error);
-      // Si falla, EVA sigue trabajando con lo que ya tenga en localStorage (modo offline)
       return JSON.parse(localStorage.getItem('eva_historial_sync') || '[]');
     }
   }
@@ -179,26 +177,42 @@ class EVASystem {
 
     const registro = historial[0];
 
-    // Actualizar racha
-    const rachaDisplay = document.getElementById("display-racha");
-    if (rachaDisplay) {
-      rachaDisplay.textContent = `${registro.racha} DÍAS`;
+    // 1. Actualizar Racha en UI y memoria
+    if (registro.racha !== undefined) {
+      this.streak = parseInt(registro.racha, 10) || 0;
+      localStorage.setItem('eva_streak', this.streak.toString());
+
+      const rachaDisplay = document.getElementById("display-racha");
+      if (rachaDisplay) {
+        rachaDisplay.textContent = `${this.streak} DÍAS`;
+      }
     }
 
-    // Actualizar rango (si lo usas)
-  //  const rangoDisplay = document.getElementById("display-rango");
-    /*    if (rangoDisplay) {
-         rangoDisplay.textContent = registro.racha >= 5 ? "SOLDADO" : "RECLUTA";
-       } */
+    // 2. Actualizar Peso en UI y memoria
+    if (registro.peso !== undefined) {
+      this.peso = parseFloat(registro.peso);
+      localStorage.setItem('eva_peso_usuario', this.peso.toString());
+      localStorage.setItem('eva_ultimo_peso', this.peso.toString());
 
-    // Actualizar peso
-    const pesoDisplay = document.getElementById("display-peso");
-    if (pesoDisplay) {
-      pesoDisplay.textContent = `${registro.peso} kg`;
-      this.peso = registro.peso; // Actualizamos la propiedad de la clase
-      localStorage.setItem('eva_peso_usuario', registro.peso.toString());
+      const pesoDisplay = document.getElementById("display-peso");
+      if (pesoDisplay) {
+        pesoDisplay.textContent = `PESO: ${this.peso} kg`;
+      }
     }
+
+    // 3. Renderizar rangos/colores de la racha
+    if (typeof this.renderRachaUI === 'function') {
+      this.renderRachaUI();
+    }
+
+    // 4. Actualizar estado del botón de sincronizar
+    this.actualizarVisibilidadBotonSync();
   }
+
+
+
+
+
 
 
 
@@ -559,14 +573,75 @@ class EVASystem {
   }
 
 
+  actualizarIndicadorRed() {
+    const badge = document.getElementById('red-status-indicator');
+    const texto = document.getElementById('red-status-text');
+
+    if (!badge || !texto) return;
+
+    if (navigator.onLine) {
+      badge.className = 'status-badge online';
+      texto.innerText = 'ONLINE';
+    } else {
+      badge.className = 'status-badge offline';
+      texto.innerText = 'OFFLINE';
+    }
+  }
+
+  iniciarDetectoresRed() {
+    // Estado inicial
+    this.actualizarIndicadorRed();
+
+    // Escuchar cuando se recupera la conexión
+    window.addEventListener('online', () => {
+      this.actualizarIndicadorRed();
+      this.hablar("Conexión restaurada. Sincronizando datos con la nube...");
+
+      // Al volver a estar online, intentamos enviar la cola offline si existe
+      if (typeof this.sincronizarConTurso === 'function') {
+        this.sincronizarConTurso();
+      }
+
+      // Y actualizamos visibilidad del botón
+      this.actualizarVisibilidadBotonSync();
+    });
+
+    // Escuchar cuando se pierde la conexión
+    window.addEventListener('offline', () => {
+      this.actualizarIndicadorRed();
+      this.hablar("Atención: Conexión a la red perdida. Pasando a modo almacenamiento local.");
+    });
+  }
+
 
 
 
   async init() {
 
+    this.iniciarDetectoresRed();
+
     console.log("Iniciando EVA...");
 
     const usuario = localStorage.getItem('eva_user');
+
+    // 1. Cargar primero datos de localStorage para arranque instantáneo (modo offline)
+    this.user = usuario;
+    this.streak = parseInt(localStorage.getItem('eva_streak')) || 0;
+    this.peso = parseFloat(localStorage.getItem('eva_peso_usuario')) || 70;
+
+    this.actualizarVisibilidadBotonSync();
+
+    // 2. Sincronizar en segundo plano sin congelar la interfaz
+    if (usuario && navigator.onLine) {
+      this.sincronizarHistorial(usuario).then(() => {
+        if (typeof this.updateLogic === 'function') {
+          this.updateLogic();
+        }
+      }).catch(err => {
+        console.warn("EVA: Inició en modo local por fallo de red:", err);
+        this.hablar("No pude sincronizar con la nube, pero el sistema está listo para usar en modo local.");
+      });
+    }
 
     /*  if (usuario) {
        // Ejecutamos el sincronismo ANTES de cualquier otra operación
@@ -980,22 +1055,21 @@ class EVASystem {
   // --- MÓDULO DE FUERZA DINÁMICA ---
 
   calcularConfiguracionFuerza() {
-    // Progresión: empezamos con 5 reps, +1 por cada 5 días de racha
-    const repsBase = 5;
-    const seriesBase = 1;
-    // Series: empezamos con 3 series, +1 serie cada 10 días de racha
+    const repsBase = 10;   // Repeticiones iniciales recomendadas
+    const seriesBase = 3; // Series iniciales recomendadas
 
-
-    // Si la racha es menor a 3, volvemos al modo "Seguro"
+    // Para rachas iniciales (< 3 días), se aplican los valores base de forma fija
     if (this.streak < 3) {
       return { reps: repsBase, series: seriesBase };
     }
 
-    const incrementoReps = Math.floor(this.streak / 5);
-    const totalReps = Math.min(repsBase + incrementoReps, 35); // Tope de 15 reps
+    // Incremento: +1 repetición cada 2 días de racha (máximo 25)
+    const incrementoReps = Math.floor(this.streak / 2);
+    const totalReps = Math.min(repsBase + incrementoReps, 25);
 
-    const incrementoSeries = Math.floor(this.streak / 10);
-    const totalSeries = Math.min(seriesBase + incrementoSeries, 35); // Tope de 5 series
+    // Incremento: +1 serie cada 5 días de racha (máximo 10 series)
+    const incrementoSeries = Math.floor(this.streak / 5);
+    const totalSeries = Math.min(seriesBase + incrementoSeries, 10);
 
     return { reps: totalReps, series: totalSeries };
   }
@@ -1228,10 +1302,15 @@ class EVASystem {
   }
 
   actualizarVisibilidadBotonSync() {
-    const btn = document.getElementById('btn-sincronizar');
-    const hayPendientes = localStorage.getItem('eva_pendientes_sync') === 'true';
+    const btn = document.getElementById('btn-sincronizar') || document.getElementById('btnSinc');
+    if (!btn) return;
 
-    // Si hay pendientes, mostramos el botón; si no, lo ocultamos
+    const pendientesFlag = localStorage.getItem('eva_pendientes_sync') === 'true';
+    const colaOffline = JSON.parse(localStorage.getItem('eva_offline_queue') || '[]');
+
+    const hayPendientes = pendientesFlag || colaOffline.length > 0;
+
+    // Solo se muestra si hay datos en cola para enviar
     btn.style.display = hayPendientes ? 'block' : 'none';
   }
 
