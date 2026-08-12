@@ -465,7 +465,7 @@ class EVASystem {
         overlay.remove();
         if (this.bgMusic) this.bgMusic.volume = 0.4;
         if (typeof this.setVideo === 'function') this.setVideo('reposo');
-        this.hablar(`Sistemas restaurados. A por la siguiente semana, ${this.nombre}.`);
+        this.hablar(`Sistemas restaurados. A por la siguiente semana, ${this.user}.`);
       };
     }, 2500);
   }
@@ -1239,44 +1239,51 @@ class EVASystem {
   }
 
   finalizarMision() {
-    // 1. EL SEGURO: Si la misión ya se completó (importada o hecha), no hacemos nada
+    // 1. El SEGURO: Si la misión ya se completó, no hacemos nada
     if (this.misionCumplida) {
       this.hablar("Esta sesión ya ha sido registrada hoy. No duplicaremos los datos.");
       return;
     }
 
-    const pesoFinal = document.getElementById('input-peso').value || this.lastWeight;
-    const fatigaFinal = document.getElementById('val-fatiga').innerText;
+    // Capturar peso del input o usar la propiedad unificada this.peso
+    const inputPeso = document.getElementById('input-peso') || document.getElementById('input-peso-manual');
+    const pesoFinal = inputPeso?.value ? parseFloat(inputPeso.value) : this.peso;
+    const fatigaFinal = document.getElementById('val-fatiga')?.innerText;
 
-    if (fatigaFinal === "?" || fatigaFinal === "") {
+    if (!fatigaFinal || fatigaFinal === "?" || fatigaFinal === "") {
       this.hablar("Registra tu nivel de fatiga para cerrar el Entrenamiento de " + this.routine);
       return;
     }
 
-    // --- LÓGICA DE CELEBRACIÓN CADA 7 DÍAS ---
-    if (this.streak > 0 && this.streak % 6 === 0) {
-      this.ejecutarCelebracionSemanal();
-    } else {
-      this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user} .`, this.estaEnojada ? 'regandina' : 'mision_ok');
-    }
-
-    // 2. Marcamos como completada ANTES de enviar para bloquear re-intentos
+    // 2. Marcar como completada e INCREMENTAR RACHA PRIMERO
     this.misionCumplida = true;
     this.streak = (this.streak || 0) + 1;
-    localStorage.setItem('eva_streak', this.streak);
+    this.peso = pesoFinal; // Actualizamos la propiedad unificada
 
-    const hoy = new Date().toISOString().split('T')[0]; // Ejemplo: "2026-06-03"
+    localStorage.setItem('eva_streak', this.streak);
+    localStorage.setItem('eva_peso_usuario', this.peso);
+
+    const hoy = new Date().toISOString().split('T')[0];
     localStorage.setItem('eva_last_date', hoy);
 
-    // 3. Sincronización
+    // 3. Evaluar si la NUEVA racha activa un video secreto o semanal
+    const huboEventoEspecial = this.evaluarVideosSecretos();
+
+    // 4. Si NO hubo evento especial, lanzar el mensaje de voz habitual (UNA SOLA VEZ)
+    if (!huboEventoEspecial) {
+      this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`, this.estaEnojada ? 'regandina' : 'mision_ok');
+    }
+
+    // 5. Sincronización de datos
     this.guardarDatosEnNube(this.routine, this.estado, fatigaFinal, this.streak, this.peso);
-    // this.actualizarEstadoEVA(false);
 
-    this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user}.`);
+    // 6. Limpieza de interfaz
+    const btnFinalizar = document.getElementById("btn-finalizar-fuerza");
+    if (btnFinalizar) btnFinalizar.style.display = "none";
 
-    // Limpieza de interfaz
-    document.getElementById("btn-finalizar-fuerza").style.display = "none";
-    document.getElementById("fatigue-module").style.display = "none";
+    const fatigueModule = document.getElementById("fatigue-module");
+    if (fatigueModule) fatigueModule.style.display = "none";
+
     this.entrenamientoActivo = false;
   }
 
@@ -1766,60 +1773,70 @@ class EVASystem {
     }
   }
 
-  actualizarRacha() {
+  evaluarVideosSecretos() {
+    // Mapa de hitos de racha con sus respectivos videos secretos y mensajes
+    const hitosSecretos = {
+      15: { video: 'assets/videos/stallone.mp4', mensaje: '¡Hito desbloqueado! 15 días consecutivos alcanzados.' },
+      20: { video: 'assets/videos/cena.mp4', mensaje: '¡Acceso Concedido! Nivel Secreto: 20 días de disciplina.' },
+      30: { video: 'assets/videos/arnold.mp4', mensaje: '¡Rango Elite! 30 días consecutivos registrados.' }
+    };
 
-    // --- DETECCIÓN DE HITOS SECRETOS ---
-    if (this.streak === 5) {
-      this.activarVideoSecreto('stallone', 'rocky.mp3', "Nivel Medio alcanzado. Sylvester te observa, SIGUE ENTRENANDO DURO .");
-    } else if (this.streak === 10) {
-      this.activarVideoSecreto('cena', 'Peacemaker.mp3', "¡BUEN NIVEL! tU NIVEL DE ESFUERZO SE EMPIEZA A NOTAR.");
-    } else if (this.streak === 15) {
-      this.activarVideoSecreto('arnold', 'arnold.mp3', "Nivel Leyenda. Arnold aprueba tu disciplina.");
+    const hitoActual = hitosSecretos[this.streak];
+
+    if (hitoActual) {
+      this.reproducirVideoSecreto(hitoActual.video, hitoActual.mensaje);
+      return true; // Se activó un video secreto
     }
+
+    // Si no coincide con un hito fijo pero es múltiplo de 6, ejecuta la celebración semanal
+    if (this.streak > 0 && this.streak % 6 === 0) {
+      this.ejecutarCelebracionSemanal();
+      return true;
+    }
+
+    return false; // No hubo evento secreto en esta racha
   }
 
-
-  activarVideoSecreto(videoFile, musicaFile, mensaje) {
-    console.log(`🎬 Activando secreto: Video = ${videoFile}, Música = ${musicaFile}`);
-
-    // 1. EVA anuncia el hito
-    this.hablar(mensaje);
+  reproducirVideoSecreto(rutaVideo, mensaje) {
+    if (this.bgMusic) this.bgMusic.volume = 0.05;
+    this.hablar(mensaje, 'level_up');
 
     setTimeout(() => {
-      // 2. Cambiamos el vídeo de EVA con control de errores
-      const v = document.getElementById('eva-display');
-      if (v) {
-        const rutaVideo = `assets/videos/${videoFile}.mp4`;
-        v.src = rutaVideo;
-        v.loop = true;
-        v.load();
-        v.play().catch(e => {
-          console.warn("⚠️ No se pudo auto-reproducir el vídeo secreto (Autoplay):", e);
-          v.muted = true; // Intento de respaldo silenciado
-          v.play();
+      const overlay = document.createElement('div');
+      overlay.id = 'overlay-video-secreto';
+      overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:9999;';
+
+      overlay.innerHTML = `
+      <div style="text-align:center; background:#050505; border:2px solid #00d4ff; padding:20px; max-width:90vw;">
+        <h2 style="color:#00d4ff; font-family:monospace; margin-bottom:15px;">>> REGISTRO SECRETO DESBLOQUEADO <<</h2>
+        <video id="vid-secreto" autoplay controls style="width:100%; max-height:70vh;">
+          <source src="${rutaVideo}" type="video/mp4">
+        </video>
+        <button id="btn-cerrar-secreto" style="margin-top:20px; width:100%; padding:12px; background:#00d4ff; color:black; font-weight:bold; border:none; cursor:pointer;">
+          CONTINUAR
+        </button>
+      </div>
+    `;
+
+      document.body.appendChild(overlay);
+
+      const vid = document.getElementById('vid-secreto');
+      if (vid) {
+        vid.play().catch(() => {
+          vid.muted = true;
+          vid.play();
         });
       }
 
-      // 3. Cambiamos la música de fondo
-      if (this.bgMusic) {
-        const rutaAudio = `assets/audio/${musicaFile}`;
-        this.bgMusic.src = rutaAudio;
-        this.bgMusic.volume = 0.6;
-        this.bgMusic.play().catch(e => {
-          console.warn("⚠️ No se pudo reproducir el audio secreto:", e);
-        });
-      }
-
-      // 4. Restaurar estado normal tras 30 segundos de celebración
-      setTimeout(() => {
+      document.getElementById('btn-cerrar-secreto').onclick = () => {
+        overlay.remove();
         if (this.bgMusic) this.bgMusic.volume = 0.4;
-        if (typeof this.updateCalendar === 'function') {
-          this.updateCalendar(); // Restablece el vídeo según el día/reposo
-        }
-      }, 30000);
-
+        if (typeof this.setVideo === 'function') this.setVideo('reposo');
+      };
     }, 2000);
   }
+
+
 
   playMusic(tipo, volumen = 0.4) {
     const pool = this.library.musica[tipo];
@@ -1923,7 +1940,7 @@ document.getElementById('btn-guardar-peso').addEventListener('click', () => {
     infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
  */
     // 3. Ejecutar la lógica de reacción
-    this.updateLogic();
+    EVA.updateLogic();
 
     console.log("Peso actualizado a:", this.lastWeight);
 
