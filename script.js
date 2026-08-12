@@ -412,44 +412,63 @@ class EVASystem {
   }
 
   ejecutarCelebracionSemanal() {
-    const semanas = this.streak / 7;
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    const ultimaCelebracion = localStorage.getItem('eva_celebracion_semanal');
 
-    // 1. Bajamos la música de fondo al mínimo para oír el vídeo de celebración
+    // Evitar que se ejecute más de una vez el mismo día
+    if (ultimaCelebracion === fechaHoy) {
+      console.log("🎉 La celebración semanal ya se ejecutó hoy.");
+      return;
+    }
+
+    localStorage.setItem('eva_celebracion_semanal', fechaHoy);
+
+    // Calcular semanas completadas (asumiendo 6 días de entreno por semana)
+    const semanas = Math.floor(this.streak / 6);
+
+    // 1. Atenuar música de fondo
     if (this.bgMusic) this.bgMusic.volume = 0.05;
 
-    // 2. EVA anuncia el hito brevemente ANTES de lanzar el overlay
+    // 2. Anuncio de EVA
     this.hablar(`¡HITO ALCANZADO! Protocolo de ${semanas} semanas activado.`, 'level_up');
 
-    // 3. Lanzamos el overlay con un pequeño retraso para que termine de hablar
+    // 3. Mostrar overlay
     setTimeout(() => {
       const overlay = document.createElement('div');
       overlay.id = 'celebracion-7-dias';
-      // ... (Estilos del overlay que definimos antes) ...
+      overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:9999;';
 
       overlay.innerHTML = `
-            <div style="text-align:center; background:black; padding:20px; border:2px solid #00d4ff;">
-                <h2 style="color:#00d4ff; font-family:monospace;">> SEMANA ${semanas} COMPLETADA</h2>
-                <video id="vid-special" autoplay controls style="width:100%; max-height:70vh;">
-                    <source src="assets/videos/celebracion_7_dias.mp4" type="video/mp4">
-                </video>
-                <button id="btn-cerrar-celebracion" 
-                        style="margin-top:20px; width:100%; padding:10px; background:#00d4ff; color:black; font-weight:bold; border:none; cursor:pointer;">
-                    CONTINUAR PROGRESO
-                </button>
-            </div>
-        `;
+      <div style="text-align:center; background:black; padding:20px; border:2px solid #00d4ff; max-width:90vw;">
+        <h2 style="color:#00d4ff; font-family:monospace;">>> SEMANA ${semanas} COMPLETADA <<</h2>
+        <video id="vid-special" autoplay controls style="width:100%; max-height:70vh;">
+          <source src="assets/videos/celebracion_7_dias.mp4" type="video/mp4">
+        </video>
+        <button id="btn-cerrar-celebracion"
+          style="margin-top:20px; width:100%; padding:10px; background:#00d4ff; color:black; font-weight:bold; border:none; cursor:pointer;">
+          CONTINUAR PROGRESO
+        </button>
+      </div>
+    `;
+
       document.body.appendChild(overlay);
 
-      // 4. Al cerrar el overlay, restauramos la música y el estado de EVA
+      const vid = document.getElementById('vid-special');
+      if (vid) {
+        vid.play().catch(() => {
+          vid.muted = true;
+          vid.play();
+        });
+      }
+
       document.getElementById('btn-cerrar-celebracion').onclick = () => {
         overlay.remove();
         if (this.bgMusic) this.bgMusic.volume = 0.4;
-        this.setVideo('reposo');
-        this.hablar("Sistemas restaurados. A por la siguiente semana, operador.");
+        if (typeof this.setVideo === 'function') this.setVideo('reposo');
+        this.hablar(`Sistemas restaurados. A por la siguiente semana, ${this.nombre}.`);
       };
-    }, 2500); // Espera a que EVA termine de decir "Hito alcanzado"
+    }, 2500);
   }
-
 
   actualizarEstadoEVA(estaEnojada) {
     this.estaEnojada = estaEnojada;
@@ -573,12 +592,12 @@ class EVASystem {
   }
 
 
- 
+
 
 
   async init() {
 
-   
+
 
     console.log("Iniciando EVA...");
 
@@ -1235,7 +1254,7 @@ class EVASystem {
     }
 
     // --- LÓGICA DE CELEBRACIÓN CADA 7 DÍAS ---
-    if (this.streak > 0 && this.streak % 7 === 0) {
+    if (this.streak > 0 && this.streak % 6 === 0) {
       this.ejecutarCelebracionSemanal();
     } else {
       this.hablar(`Misión cumplida. Racha de ${this.streak} días. Buen trabajo ${this.user} .`, this.estaEnojada ? 'regandina' : 'mision_ok');
@@ -1761,26 +1780,44 @@ class EVASystem {
 
 
   activarVideoSecreto(videoFile, musicaFile, mensaje) {
-    // 1. EVA lo anuncia
+    console.log(`🎬 Activando secreto: Video = ${videoFile}, Música = ${musicaFile}`);
+
+    // 1. EVA anuncia el hito
     this.hablar(mensaje);
 
     setTimeout(() => {
-      // 2. Cambiamos el video manualmente (saltándonos el pool normal)
+      // 2. Cambiamos el vídeo de EVA con control de errores
       const v = document.getElementById('eva-display');
-      v.src = `assets/videos/${videoFile}.mp4`;
-      v.loop = true;
-      v.play();
+      if (v) {
+        const rutaVideo = `assets/videos/${videoFile}.mp4`;
+        v.src = rutaVideo;
+        v.loop = true;
+        v.load();
+        v.play().catch(e => {
+          console.warn("⚠️ No se pudo auto-reproducir el vídeo secreto (Autoplay):", e);
+          v.muted = true; // Intento de respaldo silenciado
+          v.play();
+        });
+      }
 
-      // 3. Cambiamos la música por la especial
-      this.bgMusic.src = `assets/audio/${musicaFile}`;
-      this.bgMusic.volume = 0.6;
-      this.bgMusic.play();
+      // 3. Cambiamos la música de fondo
+      if (this.bgMusic) {
+        const rutaAudio = `assets/audio/${musicaFile}`;
+        this.bgMusic.src = rutaAudio;
+        this.bgMusic.volume = 0.6;
+        this.bgMusic.play().catch(e => {
+          console.warn("⚠️ No se pudo reproducir el audio secreto:", e);
+        });
+      }
 
-      // 4. Volvemos al estado normal tras 30 segundos de motivación
+      // 4. Restaurar estado normal tras 30 segundos de celebración
       setTimeout(() => {
-        this.bgMusic.volume = 0.4;
-        this.updateCalendar(); // Esto resetea el video a reposo
+        if (this.bgMusic) this.bgMusic.volume = 0.4;
+        if (typeof this.updateCalendar === 'function') {
+          this.updateCalendar(); // Restablece el vídeo según el día/reposo
+        }
       }, 30000);
+
     }, 2000);
   }
 
