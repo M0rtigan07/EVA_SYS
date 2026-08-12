@@ -1016,7 +1016,7 @@ class EVASystem {
 
   calcularConfiguracionFuerza() {
     const repsBase = 10;   // Repeticiones iniciales recomendadas
-    const seriesBase = 3; // Series iniciales recomendadas
+    const seriesBase = 1; // Series iniciales recomendadas
 
     // Para rachas iniciales (< 3 días), se aplican los valores base de forma fija
     if (this.streak < 3) {
@@ -1024,12 +1024,12 @@ class EVASystem {
     }
 
     // Incremento: +1 repetición cada 2 días de racha (máximo 25)
-    const incrementoReps = Math.floor(this.streak / 2);
-    const totalReps = Math.min(repsBase + incrementoReps, 25);
+    const incrementoReps = Math.floor(this.streak / 4);
+    const totalReps = Math.min(repsBase + incrementoReps, 35);
 
     // Incremento: +1 serie cada 5 días de racha (máximo 10 series)
     const incrementoSeries = Math.floor(this.streak / 5);
-    const totalSeries = Math.min(seriesBase + incrementoSeries, 10);
+    const totalSeries = Math.min(seriesBase + incrementoSeries, 20);
 
     return { reps: totalReps, series: totalSeries };
   }
