@@ -1033,118 +1033,208 @@ class EVASystem {
 
   // --- MÓDULO DE FUERZA DINÁMICA ---
 
-  calcularConfiguracionFuerza() {
-    const repsBase = 10;   // Repeticiones iniciales recomendadas
-    const seriesBase = 1; // Series iniciales recomendadas
+  // --- MÓDULO DE FUERZA DINÁMICA CON DESCANSO ENTRE SERIES ---
 
-    // Para rachas iniciales (< 3 días), se aplican los valores base de forma fija
+  calcularConfiguracionFuerza() {
+    const repsBase = 10;
+    const seriesBase = 1;
+
     if (this.streak < 3) {
-      return { reps: repsBase, series: seriesBase };
+      return { reps: repsBase, series: seriesBase, descansoSecs: 90 };
     }
 
-    // Incremento: +1 repetición cada 2 días de racha (máximo 25)
     const incrementoReps = Math.floor(this.streak / 4);
     const totalReps = Math.min(repsBase + incrementoReps, 35);
 
-    // Incremento: +1 serie cada 5 días de racha (máximo 10 series)
     const incrementoSeries = Math.floor(this.streak / 5);
     const totalSeries = Math.min(seriesBase + incrementoSeries, 20);
 
-    return { reps: totalReps, series: totalSeries };
-  }
+    // Descanso por defecto para fuerza: 90 segundos (o ajusta según racha)
+    const descansoSecs = 90;
 
-  iniciarProtocoloFuerza() {
-    this.entrenamientoActivo = true;
-    this.currentMusicVolume = 0.4;
-
-    document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
-    document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
-    document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
-    document.getElementById('infoEntreno').style.display = "none";
-    document.getElementById('fechaRutina').style.display = "none";
-
-
-    // --- AQUÍ APLICAMOS LA PROGRESIÓN ---
-    this.streak = this.obtenerRachaActualizada(); // Aseguramos dato fresco
-    const config = this.calcularConfiguracionFuerza();
-
-    const primeraTarea = this.ejerciciosFuerza[0].replace('_', ' ');
-
-    // 1. EVA dicta las órdenes por voz de manera limpia
-    this.hablar(`Entrenamiento de fuerza iniciado. Hoy tu objetivo son ${config.series} series de ${config.reps} repeticiones. Primer ejercicio: ${primeraTarea}. ¡A por ello!`);
-    this.playMusic('entrenamiento', 0.4);
-
-    // 2. Visualización limpia en el contenedor tipo carrusel
-    const lista = document.getElementById('lista-ejercicios');
-    if (lista) {
-      lista.style.display = "flex";
-    }
-
-    // Ocultamos las demás y forzamos que solo se vea la primera tarjeta
-    this.ejerciciosFuerza.forEach((_, i) => {
-      const p = document.getElementById(`paso-${i}`);
-      if (p) p.style.display = (i === 0) ? "block" : "none";
-    });
-
-    // Ocultamos el botón para limpiar la pantalla de la tablet
-    const btnFuerza = document.getElementById('btn-iniciar-fuerza');
-    if (btnFuerza) btnFuerza.style.display = 'none';
-
-    // 3. 💥 ¡CLAVE! Cambiamos el avatar de EVA para que empiece a entrenar este ejercicio específico
-    this.setVideo(this.ejerciciosFuerza[0]);
+    return { reps: totalReps, series: totalSeries, descansoSecs: descansoSecs };
   }
 
   renderFuerza() {
     this.entrenamientoActivo = false;
-    const container = document.getElementById('fuerza-container');
     const lista = document.getElementById('lista-ejercicios');
+    if (!lista) return;
 
-    container.style.display = "flex";
     lista.innerHTML = "";
-    lista.style.display = "none"; // Nace oculta esperando el gatillazo
+    lista.style.display = "none";
 
-    const btnInicio = document.getElementById('btn-iniciar-fuerza');
-    if (btnInicio) {
-      btnInicio.style.display = this.initialized ? "block" : "none";
-    }
-    const config = this.calcularConfiguracionFuerza(); // Obtiene {reps, series}
+    const config = this.calcularConfiguracionFuerza();
 
-    // Si la racha es baja, EVA avisa que estamos en modo conservador
-    if (this.streak < 3) {
-      document.getElementById('estado').innerText = "MOD: INICIO";
-      document.getElementById('estado').style.color = "yellow";
-      this.estado = "RECUPERACION";
-    } else {
-      document.getElementById('estado').innerText = "MOD: PRO";
-      document.getElementById('estado').style.color = "green";
-      this.estado = "PROGRESION";
-    }
+    // Guardar estado de progreso activo
+    this.fuerzaEstado = {
+      ejercicioIndex: 0,
+      serieActual: 1,
+      totalSeries: config.series,
+      reps: config.reps,
+      descansoSecs: config.descansoSecs,
+      enDescanso: false,
+      descansoTimer: null
+    };
 
-    const reps = config.reps;
-    const series = config.series;
+    this.hablar(`Rutina de fuerza cargada. Hoy realizaremos ${this.ejerciciosFuerza.length} ejercicios a ${config.series} series de ${config.reps} repeticiones con ${config.descansoSecs} segundos de descanso entre series. Presiona iniciar.`);
 
-    this.hablar(`Rutina de fuerza lista, operador. Hoy realizaremos ${this.ejerciciosFuerza.length} ejercicios, configurados a ${series} series de ${reps} repeticiones. Pulsa iniciar cuando estés listo.`);
+    // Construcción del contenedor dinámico visual usando el estilo CSS de tu app
+    const tarjeta = document.createElement('div');
+    tarjeta.className = 'ejercicio-paso';
+    tarjeta.id = 'fuerza-paso-unico';
+    tarjeta.style.display = "none";
+    tarjeta.innerHTML = `
+      <div class="fuerza-tracker">
+          <h2 id="fz-nombre-ejercicio" class="fz-title">--</h2>
+          
+          <div class="fz-series-container">
+              <span class="fz-label" id="fz-label-estado">SERIE EN CURSO</span>
+              <div class="fz-series-display">
+                  <span id="fz-serie-actual" class="fz-big-number">1</span>
+                  <span class="fz-slash">/</span>
+                  <span id="fz-series-totales" class="fz-total-number">1</span>
+              </div>
+          </div>
 
-    this.ejerciciosFuerza.forEach((ex, i) => {
-      const div = document.createElement('div');
-      div.className = `ejercicio-paso`;
-      div.id = `paso-${i}`;
-      div.style.display = "none"; // Las tarjetas individuales nacen apagadas
+          <div class="fz-reps-box" id="fz-reps-box">
+              <span id="fz-reps-val">10</span> REPETICIONES
+          </div>
 
-      div.innerHTML = `
-                <div class="item-fuerza">
-                    <h3>${ex.replace('_', ' ')}</h3>
-                    <p>
-                         ${series} SERIES x ${reps} REPS
-                    </p>
-                    <button onclick="EVA.nextStep(${i})" class="tool-btn">
-                        EJERCICIO HECHO
-                    </button>
-                </div>
-            `;
-      lista.appendChild(div);
-    });
+          <!-- Contenedor del contador de descanso -->
+          <div id="fz-descanso-container" style="display: none; text-align: center; margin: 10px 0;">
+              <span class="fz-label" style="color: #ffd700;">TIEMPO DE DESCANSO</span>
+              <div id="fz-timer-descanso" class="fz-big-number" style="color: #ffd700; font-size: 3rem;">01:30</div>
+          </div>
+
+          <button id="btn-fz-accion" onclick="EVA.completarSerieFuerza()" class="tool-btn fz-btn-action">
+              ✓ COMPLETAR SERIE
+          </button>
+          
+          <div id="fz-siguiente-preview" class="fz-next-preview">
+              Siguiente: --
+          </div>
+      </div>
+  `;
+    lista.appendChild(tarjeta);
   }
+
+  actualizarHUDFuerza() {
+    const exNombre = this.ejerciciosFuerza[this.fuerzaEstado.ejercicioIndex].replace('_', ' ');
+    const nextEx = this.ejerciciosFuerza[this.fuerzaEstado.ejercicioIndex + 1];
+
+    document.getElementById('fz-nombre-ejercicio').innerText = exNombre;
+    document.getElementById('fz-serie-actual').innerText = this.fuerzaEstado.serieActual;
+    document.getElementById('fz-series-totales').innerText = this.fuerzaEstado.totalSeries;
+    document.getElementById('fz-reps-val').innerText = this.fuerzaEstado.reps;
+
+    const preview = document.getElementById('fz-siguiente-preview');
+    if (this.fuerzaEstado.serieActual < this.fuerzaEstado.totalSeries) {
+      preview.innerText = `Siguiente: Serie ${this.fuerzaEstado.serieActual + 1} de ${exNombre}`;
+    } else if (nextEx) {
+      preview.innerText = `Siguiente Ejercicio: ${nextEx.replace('_', ' ')}`;
+    } else {
+      preview.innerText = `Última serie del entrenamiento`;
+    }
+  }
+
+  completarSerieFuerza() {
+    // Si presiona el botón durante el descanso, salta el descanso manualmente
+    if (this.fuerzaEstado.enDescanso) {
+      this.finalizarDescansoFuerza();
+      return;
+    }
+
+    // Si quedan series o ejercicios, inicia el descanso obligatorio
+    this.iniciarDescansoFuerza();
+  }
+
+  iniciarDescansoFuerza() {
+    this.fuerzaEstado.enDescanso = true;
+
+    // Actualizar UI para el modo descanso
+    document.getElementById('fz-label-estado').innerText = "DESCANSO EN PROCESO";
+    document.getElementById('fz-reps-box').style.display = "none";
+    document.getElementById('fz-descanso-container').style.display = "block";
+
+    const btnAccion = document.getElementById('btn-fz-accion');
+    if (btnAccion) {
+      btnAccion.innerText = "⏭ SALTAR DESCANSO";
+      btnAccion.style.borderColor = "#ffd700";
+    }
+
+    // EVA te avisa e ingresa en video/música de reposo temporal
+    this.setVideo('reposo');
+    this.hablar(`Serie completada. Descansa ${this.fuerzaEstado.descansoSecs} segundos.`, 'reposo');
+
+    let tiempoRestante = this.fuerzaEstado.descansoSecs;
+    const displayTimer = document.getElementById('fz-timer-descanso');
+
+    const actualizarDisplay = (secs) => {
+      const mins = Math.floor(secs / 60);
+      const s = secs % 60;
+      if (displayTimer) {
+        displayTimer.innerText = `${mins.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }
+    };
+
+    actualizarDisplay(tiempoRestante);
+
+    if (this.fuerzaEstado.descansoTimer) clearInterval(this.fuerzaEstado.descansoTimer);
+
+    this.fuerzaEstado.descansoTimer = setInterval(() => {
+      tiempoRestante--;
+      actualizarDisplay(tiempoRestante);
+
+      if (tiempoRestante <= 0) {
+        this.finalizarDescansoFuerza();
+      }
+    }, 1000);
+  }
+
+  finalizarDescansoFuerza() {
+    if (this.fuerzaEstado.descansoTimer) {
+      clearInterval(this.fuerzaEstado.descansoTimer);
+      this.fuerzaEstado.descansoTimer = null;
+    }
+
+    this.fuerzaEstado.enDescanso = false;
+
+    // Restaurar UI
+    document.getElementById('fz-label-estado').innerText = "SERIE EN CURSO";
+    document.getElementById('fz-reps-box').style.display = "block";
+    document.getElementById('fz-descanso-container').style.display = "none";
+
+    const btnAccion = document.getElementById('btn-fz-accion');
+    if (btnAccion) {
+      btnAccion.innerText = "✓ COMPLETAR SERIE";
+      btnAccion.style.borderColor = "#00ff88";
+    }
+
+    // Avanzar estado (Serie o Ejercicio)
+    if (this.fuerzaEstado.serieActual < this.fuerzaEstado.totalSeries) {
+      this.fuerzaEstado.serieActual++;
+      this.actualizarHUDFuerza();
+      const exNombre = this.ejerciciosFuerza[this.fuerzaEstado.ejercicioIndex];
+      this.setVideo(exNombre);
+      this.hablar(`Descanso finalizado. Serie ${this.fuerzaEstado.serieActual} de ${this.fuerzaEstado.totalSeries}. ¡A por ello!`);
+    } else if (this.fuerzaEstado.ejercicioIndex + 1 < this.ejerciciosFuerza.length) {
+      this.fuerzaEstado.ejercicioIndex++;
+      this.fuerzaEstado.serieActual = 1;
+
+      const nuevoEx = this.ejerciciosFuerza[this.fuerzaEstado.ejercicioIndex];
+      this.actualizarHUDFuerza();
+      this.setVideo(nuevoEx);
+
+      const nombreLimpio = nuevoEx.replace('_', ' ');
+      this.hablar(`Siguiente ejercicio: ${nombreLimpio}. Serie 1 de ${this.fuerzaEstado.totalSeries}.`);
+    } else {
+      this.finalizarFuerza();
+    }
+  }
+
+
+
+
 
   nextStep(index) {
     const actual = document.getElementById(`paso-${index}`);

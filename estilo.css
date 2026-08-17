@@ -537,3 +537,92 @@ body {
         opacity: 1;
     }
 }
+
+/* --- HUD táctil para el entrenamiento de Fuerza --- */
+.fuerza-tracker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+}
+
+.fz-title {
+    font-size: 1.8rem;
+    color: #fff;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px var(--blue-tech);
+}
+
+.fz-series-container {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--blue-tech);
+    border-radius: 10px;
+    padding: 10px 20px;
+    width: 90%;
+    text-align: center;
+}
+
+.fz-label {
+    font-size: 0.75rem;
+    color: var(--blue-tech);
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.fz-series-display {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.fz-big-number {
+    font-size: 3.5rem;
+    font-weight: bold;
+    color: #00ff88;
+    line-height: 1;
+    text-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+}
+
+.fz-slash {
+    font-size: 2rem;
+    color: #666;
+}
+
+.fz-total-number {
+    font-size: 1.8rem;
+    color: #aaa;
+}
+
+.fz-reps-box {
+    font-size: 1.2rem;
+    color: var(--blue-tech);
+    font-family: monospace;
+    font-weight: bold;
+    background: rgba(0, 212, 255, 0.08);
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px dashed rgba(0, 212, 255, 0.3);
+}
+
+.fz-btn-action {
+    width: 100%;
+    max-width: 320px;
+    height: 60px;
+    font-size: 1.2rem !important;
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 255, 136, 0.2) 100%) !important;
+    border-color: #00ff88 !important;
+    color: #fff !important;
+    margin-top: 5px;
+}
+
+.fz-next-preview {
+    font-size: 0.85rem;
+    color: #888;
+    font-family: monospace;
+    margin-top: 4px;
+}
