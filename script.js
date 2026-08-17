@@ -1095,31 +1095,38 @@ class EVASystem {
     this.setVideo(this.ejerciciosFuerza[0]);
   }
 
-// --- MÉTODOS DE FUERZA SIMPLIFICADOS ---
+  // --- MÉTODOS DE FUERZA SIMPLIFICADOS ---
 
-renderFuerza() {
-  this.entrenamientoActivo = false;
-  this.ejercicioFuerzaActualIndex = 0;
-  this.serieActual = 1;
+  renderFuerza() {
+    this.entrenamientoActivo = false;
+    this.ejercicioFuerzaActualIndex = 0;
+    this.serieActual = 1;
 
-  const lista = document.getElementById('lista-ejercicios');
-  if (lista) {
-    lista.innerHTML = "";
-    lista.style.display = "none";
-  }
+    // 1. Forzar visibilidad del contenedor principal y del botón de inicio
+    const container = document.getElementById('fuerza-container');
+    if (container) container.style.display = "flex";
 
-  const config = this.calcularConfiguracionFuerza();
-  const reps = config.reps;
-  const series = config.series;
+    const btnInicio = document.getElementById('btn-iniciar-fuerza');
+    if (btnInicio) btnInicio.style.display = "block";
 
-  // Generamos una sola vista enfocada por cada ejercicio
-  this.ejerciciosFuerza.forEach((ex, i) => {
-    const div = document.createElement('div');
-    div.className = `ejercicio-paso`;
-    div.id = `paso-${i}`;
-    div.style.display = "none";
+    const lista = document.getElementById('lista-ejercicios');
+    if (lista) {
+      lista.innerHTML = "";
+      lista.style.display = "none";
+    }
 
-    div.innerHTML = `
+    const config = this.calcularConfiguracionFuerza();
+    const reps = config.reps;
+    const series = config.series;
+
+    // Generamos una sola vista enfocada por cada ejercicio
+    this.ejerciciosFuerza.forEach((ex, i) => {
+      const div = document.createElement('div');
+      div.className = `ejercicio-paso`;
+      div.id = `paso-${i}`;
+      div.style.display = "none";
+
+      div.innerHTML = `
       <div class="item-fuerza">
           <h3>${ex.replace('_', ' ')}</h3>
           <p id="info-serie-${i}" style="font-size: 1.2rem; font-weight: bold; color: #00d4ff;">
@@ -1130,55 +1137,55 @@ renderFuerza() {
           </button>
       </div>
     `;
-    if (lista) lista.appendChild(div);
-  });
-}
+      if (lista) lista.appendChild(div);
+    });
+  }
 
-avanzarFuerza(index) {
-  const config = this.calcularConfiguracionFuerza();
-  const totalSeries = config.series;
-  const reps = config.reps;
+  avanzarFuerza(index) {
+    const config = this.calcularConfiguracionFuerza();
+    const totalSeries = config.series;
+    const reps = config.reps;
 
-  // 1. Si aún quedan series en el ejercicio actual
-  if (this.serieActual < totalSeries) {
-    this.serieActual++;
-    
-    // Actualizamos solo el texto de la serie actual en pantalla
-    const infoSerie = document.getElementById(`info-serie-${index}`);
-    if (infoSerie) {
-      infoSerie.innerText = `SERIE ${this.serieActual} DE ${totalSeries} (${reps} REPETICIONES)`;
+    // 1. Si aún quedan series en el ejercicio actual
+    if (this.serieActual < totalSeries) {
+      this.serieActual++;
+
+      // Actualizamos solo el texto de la serie actual en pantalla
+      const infoSerie = document.getElementById(`info-serie-${index}`);
+      if (infoSerie) {
+        infoSerie.innerText = `SERIE ${this.serieActual} DE ${totalSeries} (${reps} REPETICIONES)`;
+      }
+
+      this.hablar(`Serie ${this.serieActual - 1} lista. Descansa unos segundos y haz la serie ${this.serieActual}.`);
+      return;
     }
 
-    this.hablar(`Serie ${this.serieActual - 1} lista. Descansa unos segundos y haz la serie ${this.serieActual}.`);
-    return;
+    // 2. Si ya completó todas las series del ejercicio actual, pasamos al siguiente
+    this.serieActual = 1; // Reiniciamos contador de series
+    const actual = document.getElementById(`paso-${index}`);
+    const nextIndex = index + 1;
+    const siguiente = document.getElementById(`paso-${nextIndex}`);
+
+    if (actual) actual.style.display = "none";
+
+    if (siguiente) {
+      siguiente.style.display = "block";
+      this.ejercicioFuerzaActualIndex = nextIndex;
+
+      const nombreSiguiente = this.ejerciciosFuerza[nextIndex].replace('_', ' ');
+      this.hablar(`Ejercicio completado. Siguiente: ${nombreSiguiente}. Serie 1 de ${totalSeries}.`);
+
+      this.setVideo(this.ejerciciosFuerza[nextIndex]);
+    } else {
+      // Si era el último ejercicio
+      this.finalizarFuerza();
+    }
   }
 
-  // 2. Si ya completó todas las series del ejercicio actual, pasamos al siguiente
-  this.serieActual = 1; // Reiniciamos contador de series
-  const actual = document.getElementById(`paso-${index}`);
-  const nextIndex = index + 1;
-  const siguiente = document.getElementById(`paso-${nextIndex}`);
-
-  if (actual) actual.style.display = "none";
-
-  if (siguiente) {
-    siguiente.style.display = "block";
-    this.ejercicioFuerzaActualIndex = nextIndex;
-
-    const nombreSiguiente = this.ejerciciosFuerza[nextIndex].replace('_', ' ');
-    this.hablar(`Ejercicio completado. Siguiente: ${nombreSiguiente}. Serie 1 de ${totalSeries}.`);
-
-    this.setVideo(this.ejerciciosFuerza[nextIndex]);
-  } else {
-    // Si era el último ejercicio
-    this.finalizarFuerza();
+  // Mantener compatibilidad si tu HTML llama a nextStep()
+  nextStep(index) {
+    this.avanzarFuerza(index);
   }
-}
-
-// Mantener compatibilidad si tu HTML llama a nextStep()
-nextStep(index) {
-  this.avanzarFuerza(index);
-}
 
   finalizarFuerza() {
     this.entrenamientoActivo = false;
