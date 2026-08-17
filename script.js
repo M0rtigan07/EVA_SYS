@@ -1408,67 +1408,56 @@ class EVASystem {
   }
 
 
-async updateLogic() {
-  try {
-    // 1. Obtener el peso más reciente registrado en Turso
+  async updateLogic() {
+
     const result = await tursoClient.execute({
       sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
       args: [this.userId]
     });
 
-    if (result.rows.length === 0) {
-      console.warn("No se encontraron registros de peso en Turso.");
-      return;
-    }
+    const pesoGuardado = parseFloat(result.rows[0].peso);
 
-    const pesoActual = parseFloat(result.rows[0].peso);
-    this.peso = pesoActual; // Sincronizar propiedad local
+    const pesoActual = this.peso; // Ahora esto viene del valor que guardaste
+    console.log("Comparando peso actual:", pesoActual, "con peso anterior:", this.ultimoPeso);
 
-    // 2. Obtener el peso anterior guardado en localStorage para comparar
-    const pesoGuardado = localStorage.getItem('eva_ultimo_peso');
-    const pesoAnterior = pesoGuardado !== null ? parseFloat(pesoGuardado) : pesoActual;
 
-    const diferencia = Math.abs(pesoActual - pesoAnterior).toFixed(1);
+    const diferencia = Math.abs(pesoActual - pesoGuardado);
 
-    // 3. Evaluar la diferencia de peso
-    if (pesoActual > pesoAnterior) {
+    console.log("Diferencia de peso:", diferencia);
+
+    if (pesoActual > pesoGuardado) {
       this.actualizarEstadoEVA(true);
       localStorage.setItem('eva_enojada', 'true');
-      this.hablar(`¡Peso registrado mayor que el último! ${this.user}, has subido ${diferencia} kilos. ¡A entrenar más duro!`, 'regandina');
-    } else if (pesoActual < pesoAnterior) {
+      this.hablar("¡Peso registrado mayor que el último! " + this.user + " has engordado " + diferencia + " kilos. Esto no es bueno para tu progreso. ¡A ENTRENAR MÁS DURO!", 'regandina');
+    }
+
+    if (pesoActual < pesoGuardado) {
       this.actualizarEstadoEVA(false);
       localStorage.setItem('eva_enojada', 'false');
-      this.hablar(`¡Peso registrado menor que el último! Has bajado ${diferencia} kilos. Excelente progreso.`, 'contenta');
+      this.hablar("¡Peso registrado menor que el último!  has adelgazado " + diferencia + " kilos. Excelente progreso. ¡Sigue así!", 'contenta');
     }
 
-    // 4. Actualizar el último peso comparado en localStorage
-    localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
+    // Guardar el peso actual como el "anterior" para la próxima comparación
+    //  localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
 
-    // 5. Actualizar interfaz de usuario
-    const display = document.getElementById('display-peso');
-    if (display) display.innerText = `PESO: ${pesoActual} kg`;
 
-    const agua = (pesoActual * 0.035).toFixed(1);
+
+    const agua = (this.peso * 0.035).toFixed(1);
     const details = document.getElementById('details-box');
-    
     if (this.routine === "CARDIO") {
-      let t = this.calcularTiempoCardio();
+      const sesiones = this.db.filter(s => s.rutina === "CARDIO").length;
+      let t = this.calcularTiempoCardio(); // Calculamos el tiempo dinámicamente según la racha
       this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
-      if (details) details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-      const cardioBox = document.getElementById('cardio-session-box');
-      if (cardioBox) cardioBox.style.display = "block";
-      const timerDisplay = document.getElementById('timer-display');
-      if (timerDisplay) timerDisplay.innerText = `${t}:00`;
+      details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+      document.getElementById('cardio-session-box').style.display = "block";
+      document.getElementById('timer-display').innerText = `${t}:00`;
     } else {
-      if (details) details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+      details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
     }
-
-  } catch (error) {
-    console.error("Error al consultar el peso en Turso:", error);
   }
-}
 
- 
+
+
 
   // 1. MÉTODO PARA GUARDAR EN LA NUBE (Memoria a largo plazo)
 
@@ -1505,334 +1494,334 @@ async updateLogic() {
 * Se ejecuta en segundo plano sin bloquear la interfaz.
 */
   async guardarDatosEnNube(tipo, modo, fatiga, racha, peso) {
-    //const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
-    // 1. Datos que vamos a enviar
-    const payload = {
-      usuario: this.user, // El ID único que generaste en el constructor
-      tipo: tipo,           // 'fuerza' o 'cardio'
-      modo: modo,           // '3x5' o 'cronometrado'
-      fatiga: fatiga,  // El nivel de fatiga
-      racha: racha,
-      peso: peso       // El peso registrado
-      // El dato numérico
-    };
+  //const nombreUsuario = localStorage.getItem('eva_user'); // Recuperamos el nombre
+  // 1. Datos que vamos a enviar
+  const payload = {
+    usuario: this.user, // El ID único que generaste en el constructor
+    tipo: tipo,           // 'fuerza' o 'cardio'
+    modo: modo,           // '3x5' o 'cronometrado'
+    fatiga: fatiga,  // El nivel de fatiga
+    racha: racha,
+    peso: peso       // El peso registrado
+    // El dato numérico
+  };
 
-    // 2. Detector de entorno:
-    // Si estamos en local (localhost o 127.0.0.1), no intentamos conectar
-    // para evitar errores de red.
-    const esLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  // 2. Detector de entorno:
+  // Si estamos en local (localhost o 127.0.0.1), no intentamos conectar
+  // para evitar errores de red.
+  const esLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
-    if (esLocal) {
-      console.log("EVA: Modo Local. Sincronización omitida.", payload);
-      return; // Salimos de la función, el guardado local ya ocurre fuera de aquí
+  if (esLocal) {
+    console.log("EVA: Modo Local. Sincronización omitida.", payload);
+    return; // Salimos de la función, el guardado local ya ocurre fuera de aquí
+  }
+
+  // 3. Intento de envío a la API (Vercel + Turso)
+  try {
+    const respuesta = await fetch('/api/guardar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (respuesta.ok) {
+      console.log("EVA: Datos registrados en la nube con éxito.");
+      this.hablar("Datos sincronizados con la nube.");
+    } else {
+      console.error("EVA: Error al guardar en la nube (Status: " + respuesta.status + ")");
+      this.hablar("No se pudo sincronizar con la nube. Los datos están seguros en local.");
     }
+  } catch (error) {
+    // AQUÍ ESTÁ LA ADAPTACIÓN: Si falla, lo metemos en el JSON de cola
+    console.warn("EVA: Sin conexión. Guardando en cola local...");
 
-    // 3. Intento de envío a la API (Vercel + Turso)
-    try {
-      const respuesta = await fetch('/api/guardar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+    let cola = JSON.parse(localStorage.getItem('eva_offline_queue') || '[]');
+    cola.push(payload);
+    localStorage.setItem('eva_offline_queue', JSON.stringify(cola));
 
-      if (respuesta.ok) {
-        console.log("EVA: Datos registrados en la nube con éxito.");
-        this.hablar("Datos sincronizados con la nube.");
-      } else {
-        console.error("EVA: Error al guardar en la nube (Status: " + respuesta.status + ")");
-        this.hablar("No se pudo sincronizar con la nube. Los datos están seguros en local.");
-      }
-    } catch (error) {
-      // AQUÍ ESTÁ LA ADAPTACIÓN: Si falla, lo metemos en el JSON de cola
-      console.warn("EVA: Sin conexión. Guardando en cola local...");
-
-      let cola = JSON.parse(localStorage.getItem('eva_offline_queue') || '[]');
-      cola.push(payload);
-      localStorage.setItem('eva_offline_queue', JSON.stringify(cola));
-
-      this.hablar("Sin conexión. Datos guardados en cola para subir más tarde.");
-
-    }
+    this.hablar("Sin conexión. Datos guardados en cola para subir más tarde.");
 
   }
+
+}
 
 
   async sincronizarConTurso() {
-    // Si no hay red, abortamos para no bloquear la app
-    if (!navigator.onLine) return;
+  // Si no hay red, abortamos para no bloquear la app
+  if (!navigator.onLine) return;
 
-    let cola = JSON.parse(localStorage.getItem('eva_offline_queue') || '[]');
-    if (cola.length === 0) return;
+  let cola = JSON.parse(localStorage.getItem('eva_offline_queue') || '[]');
+  if (cola.length === 0) return;
 
-    console.log(`Sincronizando ${cola.length} entrenamientos...`);
+  console.log(`Sincronizando ${cola.length} entrenamientos...`);
 
-    // Intentamos subir el primero de la cola
-    try {
-      const respuesta = await fetch('/api/guardar', {
-        method: 'POST',
-        body: JSON.stringify(cola[0])
-      });
+  // Intentamos subir el primero de la cola
+  try {
+    const respuesta = await fetch('/api/guardar', {
+      method: 'POST',
+      body: JSON.stringify(cola[0])
+    });
 
-      if (respuesta.ok) {
-        cola.shift(); // Quitamos el que ya subió
-        localStorage.setItem('eva_offline_queue', JSON.stringify(cola));
-        // Recursividad: llamamos de nuevo para subir el siguiente
-        await this.sincronizarConTurso();
-      }
-    } catch (e) {
-      console.error("Error de red, reintentaremos luego:", e);
+    if (respuesta.ok) {
+      cola.shift(); // Quitamos el que ya subió
+      localStorage.setItem('eva_offline_queue', JSON.stringify(cola));
+      // Recursividad: llamamos de nuevo para subir el siguiente
+      await this.sincronizarConTurso();
     }
+  } catch (e) {
+    console.error("Error de red, reintentaremos luego:", e);
   }
+}
 
 
 
 
   async sincronizarDesdeNube() {
-    const usuario = localStorage.getItem('eva_user');
-    console.log("EVA: Iniciando sincronización de descarga...");
-    this.hablar("Sincronizando historial desde la nube. Esto asegura que tu progreso esté actualizado incluso sin conexión.");
+  const usuario = localStorage.getItem('eva_user');
+  console.log("EVA: Iniciando sincronización de descarga...");
+  this.hablar("Sincronizando historial desde la nube. Esto asegura que tu progreso esté actualizado incluso sin conexión.");
 
-    try {
-      const respuesta = await fetch(`/api/historial?usuario=${encodeURIComponent(usuario)}`);
-      const datosNube = await respuesta.json();
-      console.log("EVA: Datos descargados de la nube:", datosNube);
+  try {
+    const respuesta = await fetch(`/api/historial?usuario=${encodeURIComponent(usuario)}`);
+    const datosNube = await respuesta.json();
+    console.log("EVA: Datos descargados de la nube:", datosNube);
 
-      if (respuesta.ok) {
-        // Guardamos el historial completo en un objeto local de la app
-        // para que EVA pueda consultarlo sin internet
-        localStorage.setItem('eva_historial_local', JSON.stringify(datosNube));
-        console.log("EVA: Historial sincronizado con éxito. Registros:", datosNube.length);
-        this.hablar("Sincronización completa. Historial actualizado con los datos más recientes de la nube.");
-      } else {
-        console.error("EVA: Error al descargar datos:", datosNube.error);
-        this.hablar("No se pudo sincronizar con la nube. Usando datos locales existentes.");
-      }
-    } catch (error) {
-      console.warn("EVA: No se pudo conectar a la nube. Usando datos locales existentes.");
-      this.hablar("No se pudo conectar a la nube. Usando datos locales existentes.");
-    }
-  }
-
-
-  prepararBorrado() {
-    // 1. EVA se enoja visualmente
-    this.setVideo('regandina');
-    this.hablar("¿Cómo te atreves? ¿Quieres borrar todo nuestro progreso? Piénsalo dos veces.");
-
-    // 2. Mostramos el modal elegante
-    document.getElementById('modal-borrado').style.display = "flex";
-  }
-
-  cerrarModal() {
-    // 1. Ocultamos el modal inmediatamente
-    document.getElementById('modal-borrado').style.display = "none";
-
-    // 2. EVA da su respuesta de alivio
-    const fraseAlivio = "Sabia decisión. No me vuelvas a asustar así. Sigamos con el plan.";
-
-    // Usamos una lógica interna similar a 'hablar' pero asegurando el cierre del video
-    if (this.recognition) this.recognition.stop();
-    this.speech.cancel();
-
-    const msg = new SpeechSynthesisUtterance(fraseAlivio);
-    msg.lang = 'es-ES';
-
-    // Al empezar a hablar, nos aseguramos de que esté en modo 'habla'
-    this.setVideo('habla');
-
-    msg.onend = () => {
-      // --- AQUÍ ESTÁ EL ARREGLO ---
-      // Cuando termina la frase, forzamos el vídeo a 'reposo' (o al video actual de la rutina)
-      this.setVideo('contenta'); // Esto recalcula qué video debe mostrar (reposo, cardio o fuerza)
-      this.playMusic('reposo', 0.2);
-      if (this.initialized && !this.misionCumplida) {
-        setTimeout(() => { try { this.recognition.start(); } catch (e) { } }, 400);
-      }
-    };
-
-    this.speech.speak(msg);
-  }
-
-  confirmarBorrado() {
-    // 3. Purga total de datos
-    localStorage.clear();
-    this.db = [];
-    this.streak = 0;
-
-    document.getElementById('modal-borrado').style.display = "none";
-    this.hablar("Memoria BORRADA. Sistemas reiniciados. Espero que sepas lo que haces.");
-
-    // Recargamos la página tras un momento para resetear la UI
-    setTimeout(() => location.reload(), 3000);
-  }
-
-  // Función auxiliar para normalizar fechas
-  getFechaHoy() {
-    const d = new Date();
-    // Forzamos el formato día/mes/año sin horas
-    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-  }
-
-  /* async importarDatosDesdeNube() {
-    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxeYcQAHGoDzXD88RgbKX8nzpWWUjxvB1uKRVSH44i_f9nqCC8S4uc9yAfPLWlIFE2d/exec";
-   
-    this.hablar("Sincronizando base de datos local con el registro en la nube.");
-   
-    try {
-      const response = await fetch(URL_SCRIPT);
-      const data = await response.json();
-   
-      if (data && data.fecha) {
-        const hoy = this.getFechaHoy();
-   
-        // --- NORMALIZADOR DE FECHA DE NUBE ---
-        // Convertimos el ISO (2026-04-29...) a un objeto fecha de JS
-        const fechaObjeto = new Date(data.fecha);
-   
-        const fechaNubeNormalizada = `${fechaObjeto.getDate()}/${fechaObjeto.getMonth() + 1}/${fechaObjeto.getFullYear()}`;
-   
-        console.log(`Comparación Normalizada -> Nube: "${fechaNubeNormalizada}" | Local: "${hoy}"`);
-   
-        if (fechaNubeNormalizada === hoy) {
-          console.log("¡Coincidencia detectada! Bloqueando sistema...");
-          this.misionCumplida = true;
-          localStorage.setItem('eva_ultima_mision', hoy);
-          this.modoMisionCumplida();
-          this.hablar("He confirmado con la nube que tu entrenamiento de hoy está registrado. Descansa.");
-          return;
-        }
-   
-        // 1. Sincronizamos la memoria interna (Array y Variables)
-        const registroSincronizado = {
-          fecha: data.fecha,
-          rutina: data.rutina || "IMPORTADO",
-          fatiga: parseInt(data.fatiga) || 0,
-          peso: parseFloat(data.peso) || this.lastWeight,
-          racha: parseInt(data.racha) || this.streak,
-          humor: false
-        };
-   
-        this.db.push(registroSincronizado);
-        this.lastWeight = registroSincronizado.peso;
-        this.streak = registroSincronizado.racha;
-   
-        // 2. Persistencia en LocalStorage
-        localStorage.setItem('eva_db', JSON.stringify(this.db));
-        localStorage.setItem('eva_ultimo_peso', this.lastWeight);
-        localStorage.setItem('eva_streak', this.streak);
-   
-        // 3. ¿LA FECHA IMPORTADA ES HOY? -> ACTIVAR PROTOCOLO FINAL
-   
-   
-        // 4. Si la fecha no es hoy, solo actualizamos datos normales
-        this.renderRachaUI();
-        document.getElementById('input-peso').value = this.lastWeight;
-        this.hablar("Base de datos local actualizada correctamente. No hay registros para el día de hoy.");
-      }
-    } catch (e) {
-      console.error("Error de importación:", e);
-      this.hablar("Error de conexión. No se han podido volcar los datos remotos.");
-    }
-  } */
-
-  actualizarTimerVisual(s) {
-    document.getElementById('timer-display').innerText = `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
-  }
-
-  verificarSiMisionCompletadaHoy() {
-    // 1. Obtenemos la fecha de hoy en formato YYYY-MM-DD
-    const hoy = new Date().toISOString().split('T')[0];
-
-    // 2. Recuperamos la fecha del último entrenamiento (debes haberla guardado antes)
-    const ultimaFecha = localStorage.getItem('eva_last_date');
-
-    // 3. Comparamos directamente
-    return ultimaFecha === hoy;
-  }
-
-  renderRachaUI() {
-    const rachaDisplay = document.getElementById('display-racha');
-    const rangoDisplay = document.getElementById('display-rango');
-
-    if (rachaDisplay) rachaDisplay.innerText = `${this.streak} DÍAS`;
-
-
-    // --- CAMBIO DE COLOR SEGÚN PROTECCIÓN ---
-    if (this.streak >= 7) {
-      rachaDisplay.style.color = "#00d4ff"; // Azul tech brillante (Protegido)
-      rachaDisplay.style.textShadow = "0 0 10px rgba(0, 212, 255, 0.5)";
-      this.hablar("¡Racha de " + this.streak + " días! Estás en zona segura. Sigue así para mantener tu progreso protegido.", 'level_up');
-
+    if (respuesta.ok) {
+      // Guardamos el historial completo en un objeto local de la app
+      // para que EVA pueda consultarlo sin internet
+      localStorage.setItem('eva_historial_local', JSON.stringify(datosNube));
+      console.log("EVA: Historial sincronizado con éxito. Registros:", datosNube.length);
+      this.hablar("Sincronización completa. Historial actualizado con los datos más recientes de la nube.");
     } else {
-      rachaDisplay.style.color = "#888"; // Gris (En prueba)
-      rachaDisplay.style.textShadow = "none";
+      console.error("EVA: Error al descargar datos:", datosNube.error);
+      this.hablar("No se pudo sincronizar con la nube. Usando datos locales existentes.");
     }
+  } catch (error) {
+    console.warn("EVA: No se pudo conectar a la nube. Usando datos locales existentes.");
+    this.hablar("No se pudo conectar a la nube. Usando datos locales existentes.");
+  }
+}
 
 
+prepararBorrado() {
+  // 1. EVA se enoja visualmente
+  this.setVideo('regandina');
+  this.hablar("¿Cómo te atreves? ¿Quieres borrar todo nuestro progreso? Piénsalo dos veces.");
 
-    let rango = "RECLUTA";
-    let color = "var(--blue-tech)";
+  // 2. Mostramos el modal elegante
+  document.getElementById('modal-borrado').style.display = "flex";
+}
 
+cerrarModal() {
+  // 1. Ocultamos el modal inmediatamente
+  document.getElementById('modal-borrado').style.display = "none";
 
+  // 2. EVA da su respuesta de alivio
+  const fraseAlivio = "Sabia decisión. No me vuelvas a asustar así. Sigamos con el plan.";
 
+  // Usamos una lógica interna similar a 'hablar' pero asegurando el cierre del video
+  if (this.recognition) this.recognition.stop();
+  this.speech.cancel();
 
-    if (this.streak >= 15) {
-      rango = "LEYENDA TITANIO";
-      color = "#e5e4e2"; // Color platino/titanio
-      this.setVideo('exito');
-    } else if (this.streak >= 10) {
-      rango = "COMANDANTE ORO";
-      color = "#ffd700"; // Oro
-      this.setVideo('exito');
-    } else if (this.streak >= 5) {
-      rango = "OPERADOR PLATA";
-      color = "#c0c0c0"; // Plata
-      this.setVideo('exito');
+  const msg = new SpeechSynthesisUtterance(fraseAlivio);
+  msg.lang = 'es-ES';
+
+  // Al empezar a hablar, nos aseguramos de que esté en modo 'habla'
+  this.setVideo('habla');
+
+  msg.onend = () => {
+    // --- AQUÍ ESTÁ EL ARREGLO ---
+    // Cuando termina la frase, forzamos el vídeo a 'reposo' (o al video actual de la rutina)
+    this.setVideo('contenta'); // Esto recalcula qué video debe mostrar (reposo, cardio o fuerza)
+    this.playMusic('reposo', 0.2);
+    if (this.initialized && !this.misionCumplida) {
+      setTimeout(() => { try { this.recognition.start(); } catch (e) { } }, 400);
     }
+  };
 
-    if (rangoDisplay) {
-      rangoDisplay.innerText = rango;
-      rangoDisplay.style.color = color;
-      rangoDisplay.style.textShadow = `0 0 10px ${color}`;
+  this.speech.speak(msg);
+}
+
+confirmarBorrado() {
+  // 3. Purga total de datos
+  localStorage.clear();
+  this.db = [];
+  this.streak = 0;
+
+  document.getElementById('modal-borrado').style.display = "none";
+  this.hablar("Memoria BORRADA. Sistemas reiniciados. Espero que sepas lo que haces.");
+
+  // Recargamos la página tras un momento para resetear la UI
+  setTimeout(() => location.reload(), 3000);
+}
+
+// Función auxiliar para normalizar fechas
+getFechaHoy() {
+  const d = new Date();
+  // Forzamos el formato día/mes/año sin horas
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+}
+
+/* async importarDatosDesdeNube() {
+  const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxeYcQAHGoDzXD88RgbKX8nzpWWUjxvB1uKRVSH44i_f9nqCC8S4uc9yAfPLWlIFE2d/exec";
+ 
+  this.hablar("Sincronizando base de datos local con el registro en la nube.");
+ 
+  try {
+    const response = await fetch(URL_SCRIPT);
+    const data = await response.json();
+ 
+    if (data && data.fecha) {
+      const hoy = this.getFechaHoy();
+ 
+      // --- NORMALIZADOR DE FECHA DE NUBE ---
+      // Convertimos el ISO (2026-04-29...) a un objeto fecha de JS
+      const fechaObjeto = new Date(data.fecha);
+ 
+      const fechaNubeNormalizada = `${fechaObjeto.getDate()}/${fechaObjeto.getMonth() + 1}/${fechaObjeto.getFullYear()}`;
+ 
+      console.log(`Comparación Normalizada -> Nube: "${fechaNubeNormalizada}" | Local: "${hoy}"`);
+ 
+      if (fechaNubeNormalizada === hoy) {
+        console.log("¡Coincidencia detectada! Bloqueando sistema...");
+        this.misionCumplida = true;
+        localStorage.setItem('eva_ultima_mision', hoy);
+        this.modoMisionCumplida();
+        this.hablar("He confirmado con la nube que tu entrenamiento de hoy está registrado. Descansa.");
+        return;
+      }
+ 
+      // 1. Sincronizamos la memoria interna (Array y Variables)
+      const registroSincronizado = {
+        fecha: data.fecha,
+        rutina: data.rutina || "IMPORTADO",
+        fatiga: parseInt(data.fatiga) || 0,
+        peso: parseFloat(data.peso) || this.lastWeight,
+        racha: parseInt(data.racha) || this.streak,
+        humor: false
+      };
+ 
+      this.db.push(registroSincronizado);
+      this.lastWeight = registroSincronizado.peso;
+      this.streak = registroSincronizado.racha;
+ 
+      // 2. Persistencia en LocalStorage
+      localStorage.setItem('eva_db', JSON.stringify(this.db));
+      localStorage.setItem('eva_ultimo_peso', this.lastWeight);
+      localStorage.setItem('eva_streak', this.streak);
+ 
+      // 3. ¿LA FECHA IMPORTADA ES HOY? -> ACTIVAR PROTOCOLO FINAL
+ 
+ 
+      // 4. Si la fecha no es hoy, solo actualizamos datos normales
+      this.renderRachaUI();
+      document.getElementById('input-peso').value = this.lastWeight;
+      this.hablar("Base de datos local actualizada correctamente. No hay registros para el día de hoy.");
     }
+  } catch (e) {
+    console.error("Error de importación:", e);
+    this.hablar("Error de conexión. No se han podido volcar los datos remotos.");
+  }
+} */
+
+actualizarTimerVisual(s) {
+  document.getElementById('timer-display').innerText = `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+}
+
+verificarSiMisionCompletadaHoy() {
+  // 1. Obtenemos la fecha de hoy en formato YYYY-MM-DD
+  const hoy = new Date().toISOString().split('T')[0];
+
+  // 2. Recuperamos la fecha del último entrenamiento (debes haberla guardado antes)
+  const ultimaFecha = localStorage.getItem('eva_last_date');
+
+  // 3. Comparamos directamente
+  return ultimaFecha === hoy;
+}
+
+renderRachaUI() {
+  const rachaDisplay = document.getElementById('display-racha');
+  const rangoDisplay = document.getElementById('display-rango');
+
+  if (rachaDisplay) rachaDisplay.innerText = `${this.streak} DÍAS`;
+
+
+  // --- CAMBIO DE COLOR SEGÚN PROTECCIÓN ---
+  if (this.streak >= 7) {
+    rachaDisplay.style.color = "#00d4ff"; // Azul tech brillante (Protegido)
+    rachaDisplay.style.textShadow = "0 0 10px rgba(0, 212, 255, 0.5)";
+    this.hablar("¡Racha de " + this.streak + " días! Estás en zona segura. Sigue así para mantener tu progreso protegido.", 'level_up');
+
+  } else {
+    rachaDisplay.style.color = "#888"; // Gris (En prueba)
+    rachaDisplay.style.textShadow = "none";
   }
 
-  evaluarVideosSecretos() {
-    // Mapa de hitos de racha con sus respectivos videos secretos y mensajes
-    const hitosSecretos = {
-      15: { video: 'assets/videos/stallone.mp4', mensaje: '¡Hito desbloqueado! 15 días consecutivos alcanzados.' },
-      20: { video: 'assets/videos/cena.mp4', mensaje: '¡Acceso Concedido! Nivel Secreto: 20 días de disciplina.' },
-      30: { video: 'assets/videos/arnold.mp4', mensaje: '¡Rango Elite! 30 días consecutivos registrados.' }
-    };
 
-    const hitoActual = hitosSecretos[this.streak];
 
-    if (hitoActual) {
-      this.reproducirVideoSecreto(hitoActual.video, hitoActual.mensaje);
-      return true; // Se activó un video secreto
-    }
+  let rango = "RECLUTA";
+  let color = "var(--blue-tech)";
 
-    // Si no coincide con un hito fijo pero es múltiplo de 6, ejecuta la celebración semanal
-    if (this.streak > 0 && this.streak % 6 === 0) {
-      this.ejecutarCelebracionSemanal();
-      return true;
-    }
 
-    return false; // No hubo evento secreto en esta racha
+
+
+  if (this.streak >= 15) {
+    rango = "LEYENDA TITANIO";
+    color = "#e5e4e2"; // Color platino/titanio
+    this.setVideo('exito');
+  } else if (this.streak >= 10) {
+    rango = "COMANDANTE ORO";
+    color = "#ffd700"; // Oro
+    this.setVideo('exito');
+  } else if (this.streak >= 5) {
+    rango = "OPERADOR PLATA";
+    color = "#c0c0c0"; // Plata
+    this.setVideo('exito');
   }
 
-  reproducirVideoSecreto(rutaVideo, mensaje) {
-    if (this.bgMusic) this.bgMusic.volume = 0.05;
-    this.hablar(mensaje, 'level_up');
+  if (rangoDisplay) {
+    rangoDisplay.innerText = rango;
+    rangoDisplay.style.color = color;
+    rangoDisplay.style.textShadow = `0 0 10px ${color}`;
+  }
+}
 
-    setTimeout(() => {
-      const overlay = document.createElement('div');
-      overlay.id = 'overlay-video-secreto';
-      overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:9999;';
+evaluarVideosSecretos() {
+  // Mapa de hitos de racha con sus respectivos videos secretos y mensajes
+  const hitosSecretos = {
+    15: { video: 'assets/videos/stallone.mp4', mensaje: '¡Hito desbloqueado! 15 días consecutivos alcanzados.' },
+    20: { video: 'assets/videos/cena.mp4', mensaje: '¡Acceso Concedido! Nivel Secreto: 20 días de disciplina.' },
+    30: { video: 'assets/videos/arnold.mp4', mensaje: '¡Rango Elite! 30 días consecutivos registrados.' }
+  };
 
-      overlay.innerHTML = `
+  const hitoActual = hitosSecretos[this.streak];
+
+  if (hitoActual) {
+    this.reproducirVideoSecreto(hitoActual.video, hitoActual.mensaje);
+    return true; // Se activó un video secreto
+  }
+
+  // Si no coincide con un hito fijo pero es múltiplo de 6, ejecuta la celebración semanal
+  if (this.streak > 0 && this.streak % 6 === 0) {
+    this.ejecutarCelebracionSemanal();
+    return true;
+  }
+
+  return false; // No hubo evento secreto en esta racha
+}
+
+reproducirVideoSecreto(rutaVideo, mensaje) {
+  if (this.bgMusic) this.bgMusic.volume = 0.05;
+  this.hablar(mensaje, 'level_up');
+
+  setTimeout(() => {
+    const overlay = document.createElement('div');
+    overlay.id = 'overlay-video-secreto';
+    overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center; z-index:9999;';
+
+    overlay.innerHTML = `
       <div style="text-align:center; background:#050505; border:2px solid #00d4ff; padding:20px; max-width:90vw;">
         <h2 style="color:#00d4ff; font-family:monospace; margin-bottom:15px;">>> REGISTRO SECRETO DESBLOQUEADO <<</h2>
         <video id="vid-secreto" autoplay controls style="width:100%; max-height:70vh;">
@@ -1844,88 +1833,88 @@ async updateLogic() {
       </div>
     `;
 
-      document.body.appendChild(overlay);
+    document.body.appendChild(overlay);
 
-      const vid = document.getElementById('vid-secreto');
-      if (vid) {
-        vid.play().catch(() => {
-          vid.muted = true;
-          vid.play();
-        });
-      }
-
-      document.getElementById('btn-cerrar-secreto').onclick = () => {
-        overlay.remove();
-        if (this.bgMusic) this.bgMusic.volume = 0.4;
-        if (typeof this.setVideo === 'function') this.setVideo('reposo');
-      };
-    }, 2000);
-  }
-
-
-
-  playMusic(tipo, volumen = 0.4) {
-    const pool = this.library.musica[tipo];
-    if (pool && pool.length > 0) {
-      const seleccion = pool[Math.floor(Math.random() * pool.length)];
-
-      if (this.bgMusic.src.indexOf(seleccion) === -1) {
-        this.bgMusic.src = seleccion;
-        // Guardamos el volumen actual para recuperarlo luego
-        this.currentMusicVolume = volumen;
-        this.bgMusic.volume = volumen;
-        this.bgMusic.play().catch(e => console.log("Error Audio:", e));
-      }
-    }
-  }
-
-  setVideo(tipo) {
-    const v = document.getElementById('eva-display');
-    let tipoReal = tipo;
-    if (tipo === 'reposo' && this.estaEnojada) {
-      tipoReal = 'reposo_enojada';
-    }
-
-    const pool = this.library.vids[tipoReal];
-
-    if (pool && pool.length > 0) {
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      const videoName = pool[randomIndex];
-
-      const fullPath = `assets/videos/${videoName}`;
-
-      console.log("Intentando cargar vídeo:", fullPath);
-
-      v.src = fullPath;
-      v.load();
-      v.play().catch(e => {
-        console.error("Error al reproducir vídeo:", e);
-        v.muted = true;
-        v.play();
+    const vid = document.getElementById('vid-secreto');
+    if (vid) {
+      vid.play().catch(() => {
+        vid.muted = true;
+        vid.play();
       });
     }
-  } // Cierra setVideo
+
+    document.getElementById('btn-cerrar-secreto').onclick = () => {
+      overlay.remove();
+      if (this.bgMusic) this.bgMusic.volume = 0.4;
+      if (typeof this.setVideo === 'function') this.setVideo('reposo');
+    };
+  }, 2000);
+}
+
+
+
+playMusic(tipo, volumen = 0.4) {
+  const pool = this.library.musica[tipo];
+  if (pool && pool.length > 0) {
+    const seleccion = pool[Math.floor(Math.random() * pool.length)];
+
+    if (this.bgMusic.src.indexOf(seleccion) === -1) {
+      this.bgMusic.src = seleccion;
+      // Guardamos el volumen actual para recuperarlo luego
+      this.currentMusicVolume = volumen;
+      this.bgMusic.volume = volumen;
+      this.bgMusic.play().catch(e => console.log("Error Audio:", e));
+    }
+  }
+}
+
+setVideo(tipo) {
+  const v = document.getElementById('eva-display');
+  let tipoReal = tipo;
+  if (tipo === 'reposo' && this.estaEnojada) {
+    tipoReal = 'reposo_enojada';
+  }
+
+  const pool = this.library.vids[tipoReal];
+
+  if (pool && pool.length > 0) {
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const videoName = pool[randomIndex];
+
+    const fullPath = `assets/videos/${videoName}`;
+
+    console.log("Intentando cargar vídeo:", fullPath);
+
+    v.src = fullPath;
+    v.load();
+    v.play().catch(e => {
+      console.error("Error al reproducir vídeo:", e);
+      v.muted = true;
+      v.play();
+    });
+  }
+} // Cierra setVideo
 
   // --- 2. PROTOCOLOS DE ENERGÍA ---
   async solicitarWakeLock() {
-    try {
-      if ('wakeLock' in navigator) {
-        this.wakeLock = await navigator.wakeLock.request('screen');
-        console.log("🛰️ Wake Lock activado.");
-      }
-    } catch (err) {
-      console.error("❌ Fallo en Wake Lock:", err);
+  try {
+    if ('wakeLock' in navigator) {
+      this.wakeLock = await navigator.wakeLock.request('screen');
+      console.log("🛰️ Wake Lock activado.");
     }
+  } catch (err) {
+    console.error("❌ Fallo en Wake Lock:", err);
   }
+}
 
-  liberarWakeLock() {
-    if (this.wakeLock !== null) {
-      this.wakeLock.release().then(() => {
-        this.wakeLock = null;
-        console.log("💤 Wake Lock liberado.");
-      });
-    }
+liberarWakeLock() {
+  if (this.wakeLock !== null) {
+    this.wakeLock.release().then(() => {
+      this.wakeLock = null;
+      console.log("💤 Wake Lock liberado.");
+    });
   }
+}
 
 } // <--- ESTA ES LA LLAVE QUE CIERRA LA CLASE EVASystem
 
