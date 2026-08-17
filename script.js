@@ -172,7 +172,6 @@ class EVASystem {
       console.error("Error en sincronización:", error);
       return JSON.parse(localStorage.getItem('eva_historial_sync') || '[]');
     }
-    await this.updateLogic();
   }
 
   actualizarInterfazDesdeHistorial(historial) {
@@ -1293,7 +1292,6 @@ class EVASystem {
     if (fatigueModule) fatigueModule.style.display = "none";
 
     this.entrenamientoActivo = false;
-    await this.updateLogic();
   }
 
   actualizarVisibilidadBotonSync() {
@@ -1409,68 +1407,68 @@ class EVASystem {
     }
   }
 
-  async updateLogic() {
-    try {
-      // 1. Obtener el peso más reciente registrado en Turso
-      const result = await tursoClient.execute({
-        sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
-        args: [this.userId]
-      });
 
-      if (result.rows.length === 0) {
-        console.warn("No se encontraron registros de peso en Turso.");
-        return;
-      }
+async updateLogic() {
+  try {
+    // 1. Obtener el peso más reciente registrado en Turso
+    const result = await tursoClient.execute({
+      sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
+      args: [this.userId]
+    });
 
-      const pesoActual = parseFloat(result.rows[0].peso);
-      this.peso = pesoActual; // Sincronizar propiedad local
-
-      // 2. Obtener el peso anterior guardado en localStorage para comparar
-      const pesoGuardado = localStorage.getItem('eva_ultimo_peso');
-      const pesoAnterior = pesoGuardado !== null ? parseFloat(pesoGuardado) : pesoActual;
-
-      const diferencia = Math.abs(pesoActual - pesoAnterior).toFixed(1);
-
-      // 3. Evaluar la diferencia de peso
-      if (pesoActual > pesoAnterior) {
-        this.actualizarEstadoEVA(true);
-        localStorage.setItem('eva_enojada', 'true');
-        this.hablar(`¡Peso registrado mayor que el último! ${this.user}, has subido ${diferencia} kilos. ¡A entrenar más duro!`, 'regandina');
-      } else if (pesoActual < pesoAnterior) {
-        this.actualizarEstadoEVA(false);
-        localStorage.setItem('eva_enojada', 'false');
-        this.hablar(`¡Peso registrado menor que el último! Has bajado ${diferencia} kilos. Excelente progreso.`, 'contenta');
-      }
-
-      // 4. Actualizar el último peso comparado en localStorage
-      localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
-
-      // 5. Actualizar interfaz de usuario
-      const display = document.getElementById('display-peso');
-      if (display) display.innerText = `PESO: ${pesoActual} kg`;
-
-      const agua = (pesoActual * 0.035).toFixed(1);
-      const details = document.getElementById('details-box');
-
-      if (this.routine === "CARDIO") {
-        let t = this.calcularTiempoCardio();
-        this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
-        if (details) details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-        const cardioBox = document.getElementById('cardio-session-box');
-        if (cardioBox) cardioBox.style.display = "block";
-        const timerDisplay = document.getElementById('timer-display');
-        if (timerDisplay) timerDisplay.innerText = `${t}:00`;
-      } else {
-        if (details) details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-      }
-
-    } catch (error) {
-      console.error("Error al consultar el peso en Turso:", error);
+    if (result.rows.length === 0) {
+      console.warn("No se encontraron registros de peso en Turso.");
+      return;
     }
+
+    const pesoActual = parseFloat(result.rows[0].peso);
+    this.peso = pesoActual; // Sincronizar propiedad local
+
+    // 2. Obtener el peso anterior guardado en localStorage para comparar
+    const pesoGuardado = localStorage.getItem('eva_ultimo_peso');
+    const pesoAnterior = pesoGuardado !== null ? parseFloat(pesoGuardado) : pesoActual;
+
+    const diferencia = Math.abs(pesoActual - pesoAnterior).toFixed(1);
+
+    // 3. Evaluar la diferencia de peso
+    if (pesoActual > pesoAnterior) {
+      this.actualizarEstadoEVA(true);
+      localStorage.setItem('eva_enojada', 'true');
+      this.hablar(`¡Peso registrado mayor que el último! ${this.user}, has subido ${diferencia} kilos. ¡A entrenar más duro!`, 'regandina');
+    } else if (pesoActual < pesoAnterior) {
+      this.actualizarEstadoEVA(false);
+      localStorage.setItem('eva_enojada', 'false');
+      this.hablar(`¡Peso registrado menor que el último! Has bajado ${diferencia} kilos. Excelente progreso.`, 'contenta');
+    }
+
+    // 4. Actualizar el último peso comparado en localStorage
+    localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
+
+    // 5. Actualizar interfaz de usuario
+    const display = document.getElementById('display-peso');
+    if (display) display.innerText = `PESO: ${pesoActual} kg`;
+
+    const agua = (pesoActual * 0.035).toFixed(1);
+    const details = document.getElementById('details-box');
+    
+    if (this.routine === "CARDIO") {
+      let t = this.calcularTiempoCardio();
+      this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
+      if (details) details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+      const cardioBox = document.getElementById('cardio-session-box');
+      if (cardioBox) cardioBox.style.display = "block";
+      const timerDisplay = document.getElementById('timer-display');
+      if (timerDisplay) timerDisplay.innerText = `${t}:00`;
+    } else {
+      if (details) details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+    }
+
+  } catch (error) {
+    console.error("Error al consultar el peso en Turso:", error);
   }
+}
 
-
-
+ 
 
   // 1. MÉTODO PARA GUARDAR EN LA NUBE (Memoria a largo plazo)
 
@@ -1558,8 +1556,6 @@ class EVASystem {
 
     }
 
-    await this.updateLogic();
-
   }
 
 
@@ -1588,7 +1584,6 @@ class EVASystem {
     } catch (e) {
       console.error("Error de red, reintentaremos luego:", e);
     }
-    await this.updateLogic();
   }
 
 
@@ -1618,7 +1613,6 @@ class EVASystem {
       console.warn("EVA: No se pudo conectar a la nube. Usando datos locales existentes.");
       this.hablar("No se pudo conectar a la nube. Usando datos locales existentes.");
     }
-    await this.updateLogic();
   }
 
 
