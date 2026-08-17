@@ -26,6 +26,8 @@ class EVASystem {
     this.streak = localStorage.getItem('eva_streak') ? parseInt(localStorage.getItem('eva_streak')) : 0;
     this.lastTrainingDate = localStorage.getItem('eva_last_date') || null;
     this.estado = "";
+    this.ejercicioFuerzaActualIndex = 0;
+    this.serieActual = 1;
 
     this.ejerciciosFuerza = ["Abdominales", "Sentadillas", "Pesas_Frontal", "Pesas_Lateral"];
 
@@ -597,8 +599,6 @@ class EVASystem {
 
   async init() {
 
-
-
     console.log("Iniciando EVA...");
 
     const usuario = localStorage.getItem('eva_user');
@@ -606,6 +606,7 @@ class EVASystem {
     // 1. Cargar primero datos de localStorage para arranque instantáneo (modo offline)
     this.user = usuario;
     this.streak = parseInt(localStorage.getItem('eva_streak')) || 0;
+
     this.peso = parseFloat(localStorage.getItem('eva_peso_usuario')) || 70;
 
     this.actualizarVisibilidadBotonSync();
@@ -1094,91 +1095,90 @@ class EVASystem {
     this.setVideo(this.ejerciciosFuerza[0]);
   }
 
-  renderFuerza() {
-    this.entrenamientoActivo = false;
-    const container = document.getElementById('fuerza-container');
-    const lista = document.getElementById('lista-ejercicios');
+// --- MÉTODOS DE FUERZA SIMPLIFICADOS ---
 
-    container.style.display = "flex";
+renderFuerza() {
+  this.entrenamientoActivo = false;
+  this.ejercicioFuerzaActualIndex = 0;
+  this.serieActual = 1;
+
+  const lista = document.getElementById('lista-ejercicios');
+  if (lista) {
     lista.innerHTML = "";
-    lista.style.display = "none"; // Nace oculta esperando el gatillazo
-
-    const btnInicio = document.getElementById('btn-iniciar-fuerza');
-    if (btnInicio) {
-      btnInicio.style.display = this.initialized ? "block" : "none";
-    }
-    const config = this.calcularConfiguracionFuerza(); // Obtiene {reps, series}
-
-    // Si la racha es baja, EVA avisa que estamos en modo conservador
-    if (this.streak < 3) {
-      document.getElementById('estado').innerText = "MOD: INICIO";
-      document.getElementById('estado').style.color = "yellow";
-      this.estado = "RECUPERACION";
-    } else {
-      document.getElementById('estado').innerText = "MOD: PRO";
-      document.getElementById('estado').style.color = "green";
-      this.estado = "PROGRESION";
-    }
-
-    const reps = config.reps;
-    const series = config.series;
-
-    this.hablar(`Rutina de fuerza lista, operador. Hoy realizaremos ${this.ejerciciosFuerza.length} ejercicios, configurados a ${series} series de ${reps} repeticiones. Pulsa iniciar cuando estés listo.`);
-
-    this.ejerciciosFuerza.forEach((ex, i) => {
-      const div = document.createElement('div');
-      div.className = `ejercicio-paso`;
-      div.id = `paso-${i}`;
-      div.style.display = "none"; // Las tarjetas individuales nacen apagadas
-
-      div.innerHTML = `
-                <div class="item-fuerza">
-                    <h3>${ex.replace('_', ' ')}</h3>
-                    <p>
-                         ${series} SERIES x ${reps} REPS
-                    </p>
-                    <button onclick="EVA.nextStep(${i})" class="tool-btn">
-                        EJERCICIO HECHO
-                    </button>
-                </div>
-            `;
-      lista.appendChild(div);
-    });
+    lista.style.display = "none";
   }
 
-  nextStep(index) {
-    const actual = document.getElementById(`paso-${index}`);
-    const nextIndex = index + 1;
-    const siguiente = document.getElementById(`paso-${nextIndex}`);
+  const config = this.calcularConfiguracionFuerza();
+  const reps = config.reps;
+  const series = config.series;
 
-    // Ocultamos la tarjeta actual que acabas de terminar
-    if (actual) actual.style.display = "none";
+  // Generamos una sola vista enfocada por cada ejercicio
+  this.ejerciciosFuerza.forEach((ex, i) => {
+    const div = document.createElement('div');
+    div.className = `ejercicio-paso`;
+    div.id = `paso-${i}`;
+    div.style.display = "none";
 
-    if (siguiente) {
-      // Mostramos la tarjeta del siguiente ejercicio en la lista
-      siguiente.style.display = "block";
+    div.innerHTML = `
+      <div class="item-fuerza">
+          <h3>${ex.replace('_', ' ')}</h3>
+          <p id="info-serie-${i}" style="font-size: 1.2rem; font-weight: bold; color: #00d4ff;">
+             SERIE 1 DE ${series} (${reps} REPETICIONES)
+          </p>
+          <button onclick="EVA.avanzarFuerza(${i})" class="tool-btn">
+              COMPLETAR SERIE
+          </button>
+      </div>
+    `;
+    if (lista) lista.appendChild(div);
+  });
+}
 
-      const config = this.calcularConfiguracionFuerza(); // Obtiene {reps, series}
+avanzarFuerza(index) {
+  const config = this.calcularConfiguracionFuerza();
+  const totalSeries = config.series;
+  const reps = config.reps;
 
-      const reps = config.reps;
-      const series = config.series;
-
-      const nombreSiguiente = this.ejerciciosFuerza[nextIndex].replace('_', ' ');
-
-      // EVA te anuncia los nuevos objetivos en voz alta
-      this.hablar(`Completado. Siguiente ejercicio: ${nombreSiguiente}. Te corresponden ${series} series de ${reps} repeticiones. ¡Mantén el ritmo!`);
-
-      setTimeout(() => {
-        this.playMusic('entrenamiento');
-      }, 800);
-
-      // 💥 ¡CLAVE! EVA cambia su vídeo en tiempo real para enseñarte cómo hacer el nuevo ejercicio
-      this.setVideo(this.ejerciciosFuerza[nextIndex]);
-    } else {
-      // Si ya no quedan más tareas en la lista, saltamos al protocolo de cierre exitoso
-      this.finalizarFuerza();
+  // 1. Si aún quedan series en el ejercicio actual
+  if (this.serieActual < totalSeries) {
+    this.serieActual++;
+    
+    // Actualizamos solo el texto de la serie actual en pantalla
+    const infoSerie = document.getElementById(`info-serie-${index}`);
+    if (infoSerie) {
+      infoSerie.innerText = `SERIE ${this.serieActual} DE ${totalSeries} (${reps} REPETICIONES)`;
     }
+
+    this.hablar(`Serie ${this.serieActual - 1} lista. Descansa unos segundos y haz la serie ${this.serieActual}.`);
+    return;
   }
+
+  // 2. Si ya completó todas las series del ejercicio actual, pasamos al siguiente
+  this.serieActual = 1; // Reiniciamos contador de series
+  const actual = document.getElementById(`paso-${index}`);
+  const nextIndex = index + 1;
+  const siguiente = document.getElementById(`paso-${nextIndex}`);
+
+  if (actual) actual.style.display = "none";
+
+  if (siguiente) {
+    siguiente.style.display = "block";
+    this.ejercicioFuerzaActualIndex = nextIndex;
+
+    const nombreSiguiente = this.ejerciciosFuerza[nextIndex].replace('_', ' ');
+    this.hablar(`Ejercicio completado. Siguiente: ${nombreSiguiente}. Serie 1 de ${totalSeries}.`);
+
+    this.setVideo(this.ejerciciosFuerza[nextIndex]);
+  } else {
+    // Si era el último ejercicio
+    this.finalizarFuerza();
+  }
+}
+
+// Mantener compatibilidad si tu HTML llama a nextStep()
+nextStep(index) {
+  this.avanzarFuerza(index);
+}
 
   finalizarFuerza() {
     this.entrenamientoActivo = false;
@@ -1651,24 +1651,24 @@ class EVASystem {
 
   /* async importarDatosDesdeNube() {
     const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxeYcQAHGoDzXD88RgbKX8nzpWWUjxvB1uKRVSH44i_f9nqCC8S4uc9yAfPLWlIFE2d/exec";
-  
+   
     this.hablar("Sincronizando base de datos local con el registro en la nube.");
-  
+   
     try {
       const response = await fetch(URL_SCRIPT);
       const data = await response.json();
-  
+   
       if (data && data.fecha) {
         const hoy = this.getFechaHoy();
-  
+   
         // --- NORMALIZADOR DE FECHA DE NUBE ---
         // Convertimos el ISO (2026-04-29...) a un objeto fecha de JS
         const fechaObjeto = new Date(data.fecha);
-  
+   
         const fechaNubeNormalizada = `${fechaObjeto.getDate()}/${fechaObjeto.getMonth() + 1}/${fechaObjeto.getFullYear()}`;
-  
+   
         console.log(`Comparación Normalizada -> Nube: "${fechaNubeNormalizada}" | Local: "${hoy}"`);
-  
+   
         if (fechaNubeNormalizada === hoy) {
           console.log("¡Coincidencia detectada! Bloqueando sistema...");
           this.misionCumplida = true;
@@ -1677,7 +1677,7 @@ class EVASystem {
           this.hablar("He confirmado con la nube que tu entrenamiento de hoy está registrado. Descansa.");
           return;
         }
-  
+   
         // 1. Sincronizamos la memoria interna (Array y Variables)
         const registroSincronizado = {
           fecha: data.fecha,
@@ -1687,19 +1687,19 @@ class EVASystem {
           racha: parseInt(data.racha) || this.streak,
           humor: false
         };
-  
+   
         this.db.push(registroSincronizado);
         this.lastWeight = registroSincronizado.peso;
         this.streak = registroSincronizado.racha;
-  
+   
         // 2. Persistencia en LocalStorage
         localStorage.setItem('eva_db', JSON.stringify(this.db));
         localStorage.setItem('eva_ultimo_peso', this.lastWeight);
         localStorage.setItem('eva_streak', this.streak);
-  
+   
         // 3. ¿LA FECHA IMPORTADA ES HOY? -> ACTIVAR PROTOCOLO FINAL
-  
-  
+   
+   
         // 4. Si la fecha no es hoy, solo actualizamos datos normales
         this.renderRachaUI();
         document.getElementById('input-peso').value = this.lastWeight;
