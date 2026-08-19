@@ -328,6 +328,9 @@ class EVASystem {
     this.hablar("Se ha descargado tu archivo de seguridad. Guárdalo bien.");
   }
 
+
+  // ✅ REEMPLAZAR EN script.js
+
   async gestionarArchivoBackup(usuario) {
     return new Promise((resolve) => {
       const contenedorBackup = document.getElementById('backup');
@@ -345,10 +348,14 @@ class EVASystem {
         const reader = new FileReader();
         reader.onload = async (event) => {
           try {
-            const contenido = JSON.parse(event.target.result);
+            // 1. Limpiamos posibles caracteres BOM de UTF-8 que Android añade al inicio
+            let textoLimpio = event.target.result.replace(/^\uFEFF/, '').trim();
+            const contenido = JSON.parse(textoLimpio);
 
-            // Extraemos la llave soportando ambas propiedades
-            const llave = contenido.eva_secret_id || contenido.llave;
+            // 2. Extraemos la llave y el usuario, aplicando .trim() para borrar espacios
+            let llaveBruta = contenido.eva_secret_id || contenido.llave;
+            const llave = llaveBruta ? String(llaveBruta).trim() : null;
+            const usuarioLimpio = String(usuario).trim();
 
             if (!llave) {
               this.hablar("El archivo de backup no contiene una llave válida.");
@@ -356,47 +363,43 @@ class EVASystem {
               return;
             }
 
-            console.log(`Verificando credenciales para ${usuario}...`);
+            console.log(`[Android Sync] Verificando usuario: "${usuarioLimpio}" con llave: "${llave}"`);
 
-            // Petición con encodeURIComponent para evitar corrupción de caracteres
-            const url = `/api/auth?nombre=${encodeURIComponent(usuario)}&eva_secret_id=${encodeURIComponent(llave)}`;
+            // 3. Petición a la API asegurando codificación limpia de URL
+            const url = `/api/auth?nombre=${encodeURIComponent(usuarioLimpio)}&eva_secret_id=${encodeURIComponent(llave)}`;
             const res = await fetch(url);
             const data = await res.json();
 
-            // Aceptamos 'autorizado' o 'id_encontrado' según la respuesta de tu backend
+            // 4. Comprobación flexible de respuesta
             if (res.ok && (data.autorizado || data.id_encontrado)) {
-              localStorage.setItem('eva_user', usuario);
+              localStorage.setItem('eva_user', usuarioLimpio);
               localStorage.setItem('eva_key', llave);
 
               if (contenedorBackup) contenedorBackup.style.display = "none";
 
-              this.hablar("Acceso restaurado con éxito. Sincronizando datos.");
+              this.hablar("Acceso restaurado con éxito en Android. Sincronizando datos.");
 
-              // Sincronizar historial con Turso
-              await this.sincronizarHistorial(usuario);
+              await this.sincronizarHistorial(usuarioLimpio);
               await this.init();
               resolve(true);
             } else {
-              console.error("Respuesta API:", data);
+              console.error("Respuesta API denegada:", data);
               this.hablar("La llave del archivo no corresponde a este usuario.");
               resolve(false);
             }
           } catch (err) {
-            console.error("Error al procesar el backup:", err);
+            console.error("Error al procesar el backup en Android:", err);
             this.hablar("Archivo corrupto o con formato JSON inválido.");
             resolve(false);
           }
         };
 
-        reader.readAsText(file);
+        reader.readAsText(file, 'UTF-8'); // Forzamos codificación UTF-8 explícita
       };
 
-      // Forzar el clic para abrir el diálogo de selección
       inputArchivo.click();
     });
   }
-
-
 
 
 
