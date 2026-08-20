@@ -9,13 +9,16 @@ class EVASystem {
     this.initialized = false;
     this.wakeLock = null;
     this.tiempoRestanteAlPausar = 0;
-    this.user = "";
-    //  this.ausenciaDetectada = false;
+    this.user = localStorage.getItem('eva_user') || "";
+    this.userId = this.user || null;
+    this.ausenciaDetectada = false;
     this.timerReactivacion = null;
     this.segundosParaReactivar = 25; // Ajusta aquí el tiempo que quieras de margen
     this.timerReactivacion = null;
     this.entrenamientoActivo = false; // Importante inicializar esto
     this.db = JSON.parse(localStorage.getItem('eva_db')) || [];
+    this.routine = "DESCANSO";
+    this.recognition = null;
     this.peso = 70;
     this.pesoActual = localStorage.getItem('eva_peso_actual');
     this.ultimoPeso = localStorage.getItem('eva_ultimo_peso');
@@ -535,8 +538,12 @@ class EVASystem {
 
 
   hablar(texto, tipo = "habla") {
-    if (this.recognition) this.recognition.stop();
-    this.speech.cancel();
+    if (this.recognition && typeof this.recognition.stop === 'function') {
+      this.recognition.stop();
+    }
+    if (this.speech && typeof this.speech.cancel === 'function') {
+      this.speech.cancel();
+    }
 
     this.setVideo(tipo);
 
@@ -570,7 +577,11 @@ class EVASystem {
 
       if (!this.misionCumplida) {
         setTimeout(() => {
-          try { this.recognition.start(); } catch (e) { }
+          try {
+            if (this.recognition && typeof this.recognition.start === 'function') {
+              this.recognition.start();
+            }
+          } catch (e) { }
         }, 500);
       }
 
@@ -643,7 +654,8 @@ class EVASystem {
     const usuario = localStorage.getItem('eva_user');
 
     // 1. Cargar primero datos de localStorage para arranque instantáneo (modo offline)
-    this.user = usuario;
+    this.user = usuario || this.user || "";
+    this.userId = this.user || null;
     this.streak = parseInt(localStorage.getItem('eva_streak')) || 0;
 
     this.peso = parseFloat(localStorage.getItem('eva_peso_usuario')) || 70;
@@ -680,23 +692,27 @@ class EVASystem {
     });
 
 
-    const backup = document.getElementById('backup').style.display = 'none';
+    const backupBox = document.getElementById('backup');
+    if (backupBox) backupBox.style.display = 'none';
 
-    this.user = localStorage.getItem('eva_user');
+    this.user = localStorage.getItem('eva_user') || this.user || "";
+    this.userId = this.user || null;
     console.log("Usuario detectado:", this.user);
 
     localStorage.setItem('eva_peso_usuario', this.peso);
     console.log("Peso inicial establecido en:", this.peso, "kg");
 
     const btnIniciar = document.getElementById('btn-iniciar');
-    btnIniciar.disabled = true;
-    btnIniciar.innerText = "SYSTEM: ONLINE";
-    btnIniciar.style.opacity = "0.6";
-    btnIniciar.style.cursor = "default";
+    if (btnIniciar) {
+      btnIniciar.disabled = true;
+      btnIniciar.innerText = "SYSTEM: ONLINE";
+      btnIniciar.style.opacity = "0.6";
+      btnIniciar.style.cursor = "default";
+    }
 
 
     const controlPeso = document.getElementById('control-peso-manual');
-    controlPeso.style.display = 'block';
+    if (controlPeso) controlPeso.style.display = 'block';
 
     // 2. Actualizamos la interfaz (esto hace que veas el cambio en pantalla)
     const display = document.getElementById('display-peso');
@@ -708,11 +724,15 @@ class EVASystem {
 
     const pesoTxt = localStorage.getItem('eva_ultimo_peso') || "70";
 
-    infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
+    if (infoPeso) {
+      infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
+    }
 
 
     // En tu método de inicialización o donde configuras el evento
-    document.getElementById('btn-guardar-peso').addEventListener('click', () => {
+    const btnGuardarPeso = document.getElementById('btn-guardar-peso');
+    if (btnGuardarPeso) {
+      btnGuardarPeso.addEventListener('click', () => {
 
       const input = document.getElementById('input-peso');
       const valorInput = input.value;
@@ -739,6 +759,7 @@ class EVASystem {
       }
 
     });
+    }
 
     // 1. Lo primero: ¿Ya entreno hoy?
     // const bloqueado = this.checkBloqueoDiario();
@@ -808,12 +829,13 @@ class EVASystem {
     //   document.getElementById('input-peso').value = this.lastWeight;
 
     const controlP = document.getElementById('control-peso-manual');
-    controlP.style.display = 'block';
-    controlP.style.animation = 'fadeIn 2s';
-    controlP.onclick = () => {
-      console.log("Peso manual actualizado a:", this.lastWeight);
-
-    };
+    if (controlP) {
+      controlP.style.display = 'block';
+      controlP.style.animation = 'fadeIn 2s';
+      controlP.onclick = () => {
+        console.log("Peso manual actualizado a:", this.lastWeight);
+      };
+    }
 
 
 
@@ -1448,15 +1470,24 @@ class EVASystem {
 
 
   async updateLogic() {
+    let pesoGuardado = this.peso;
 
-    const result = await tursoClient.execute({
-      sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
-      args: [this.userId]
-    });
+    if (typeof window !== 'undefined' && window.tursoClient && this.userId) {
+      try {
+        const result = await window.tursoClient.execute({
+          sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
+          args: [this.userId]
+        });
 
-    const pesoGuardado = parseFloat(result.rows[0].peso);
+        if (result && result.rows && result.rows.length > 0) {
+          pesoGuardado = parseFloat(result.rows[0].peso) || this.peso;
+        }
+      } catch (error) {
+        console.warn("EVA: No se pudo consultar el peso remoto; usando valor local.", error);
+      }
+    }
 
-    const pesoActual = this.peso; // Ahora esto viene del valor que guardaste
+    const pesoActual = this.peso;
     console.log("Comparando peso actual:", pesoActual, "con peso anterior:", this.ultimoPeso);
 
 
@@ -1483,16 +1514,32 @@ class EVASystem {
 
     const agua = (this.peso * 0.035).toFixed(1);
     const details = document.getElementById('details-box');
+
     if (this.routine === "CARDIO") {
-      const sesiones = this.db.filter(s => s.rutina === "CARDIO").length;
-      let t = this.calcularTiempoCardio(); // Calculamos el tiempo dinámicamente según la racha
-      this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
-      details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-      document.getElementById('cardio-session-box').style.display = "block";
-      document.getElementById('timer-display').innerText = `${t}:00`;
-    } else {
-      details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-    }
+     const sesiones = this.db.filter(s => s.rutina === "CARDIO").length;
+  let t = this.calcularTiempoCardio(); // Calculamos el tiempo dinámicamente según la racha
+  this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
+  
+  if (details) {
+    details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+  }
+
+  // Captura segura de los elementos para evitar errores
+  const cardioBox = document.getElementById('cardio-session-box');
+  const timerDisplay = document.getElementById('timer-display');
+
+  if (cardioBox) {
+    cardioBox.style.display = "block";
+  }
+
+  if (timerDisplay) {
+    timerDisplay.innerText = `${t}:00`;
+  }
+
+} else {
+  if (details) {
+    details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+  }
   }
 
 
@@ -1661,8 +1708,8 @@ class EVASystem {
     const fraseAlivio = "Sabia decisión. No me vuelvas a asustar así. Sigamos con el plan.";
 
     // Usamos una lógica interna similar a 'hablar' pero asegurando el cierre del video
-    if (this.recognition) this.recognition.stop();
-    this.speech.cancel();
+    if (this.recognition && typeof this.recognition.stop === 'function') this.recognition.stop();
+    if (this.speech && typeof this.speech.cancel === 'function') this.speech.cancel();
 
     const msg = new SpeechSynthesisUtterance(fraseAlivio);
     msg.lang = 'es-ES';
@@ -1909,6 +1956,8 @@ class EVASystem {
 
   setVideo(tipo) {
     const v = document.getElementById('eva-display');
+    if (!v || !this.library || !this.library.vids) return;
+
     let tipoReal = tipo;
     if (tipo === 'reposo' && this.estaEnojada) {
       tipoReal = 'reposo_enojada';
@@ -1976,32 +2025,28 @@ const EVA = new EVASystem();
  */
 
 // En tu método de inicialización o donde configuras el evento
-document.getElementById('btn-guardar-peso').addEventListener('click', () => {
-  const input = document.getElementById('input-peso-manual');
-  const nuevoPeso = parseInt(input.value, 10);
+const btnGuardarPesoGlobal = document.getElementById('btn-guardar-peso');
+if (btnGuardarPesoGlobal) {
+  btnGuardarPesoGlobal.addEventListener('click', () => {
+    const input = document.getElementById('input-peso-manual');
+    if (!input) return;
 
-  if (!isNaN(nuevoPeso)) {
-    // 1. Actualizar memoria interna
-    this.lastWeight = nuevoPeso;
+    const nuevoPeso = parseInt(input.value, 10);
 
-    // 2. Persistir en localStorage
-    localStorage.setItem('eva_ultimo_peso', nuevoPeso.toString());
+    if (!isNaN(nuevoPeso)) {
+      // 1. Actualizar memoria interna
+      this.lastWeight = nuevoPeso;
 
-    /*  const infoPeso = document.getElementById('display-peso-kg');
+      // 2. Persistir en localStorage
+      localStorage.setItem('eva_ultimo_peso', nuevoPeso.toString());
 
-    const pesoTxt = localStorage.getItem('eva_peso_usuario');
+      // 3. Ejecutar la lógica de reacción
+      EVA.updateLogic();
 
-    infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
- */
-    // 3. Ejecutar la lógica de reacción
-    EVA.updateLogic();
-
-    console.log("Peso actualizado a:", this.lastWeight);
-
-
-
-  }
-});
+      console.log("Peso actualizado a:", this.lastWeight);
+    }
+  });
+}
 
 
 
@@ -2020,23 +2065,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // Verificar si ya hay una sesión activa
   const tokenGuardado = localStorage.getItem('eva_session');
   if (tokenGuardado) {
-    const data = JSON.parse(atob(tokenGuardado));
-    //  document.getElementById('mensaje-info').innerText = `USUARIO: ${data.user}`;
-    // Opcional: Deshabilitar el botón de login aquí
-    const btnInfoUsuario = document.getElementById('btn-info-usuario');
-    btnInfoUsuario.innerText = `INFO USUARIO: ${data.user}`;
-    btnInfoUsuario.style.display = "block";
+    try {
+      const data = JSON.parse(atob(tokenGuardado));
+      //  document.getElementById('mensaje-info').innerText = `USUARIO: ${data.user}`;
+      // Opcional: Deshabilitar el botón de login aquí
+      const btnInfoUsuario = document.getElementById('btn-info-usuario');
+      if (btnInfoUsuario) {
+        btnInfoUsuario.innerText = `INFO USUARIO: ${data.user}`;
+        btnInfoUsuario.style.display = "block";
+      }
 
-    const btnIniciar = document.getElementById('btn-iniciar');
-    btnIniciar.innerText = " INICIAR SISTEMA OPERATIVO";
-    btnIniciar.onclick = () => {
-      EVA.init();
-    };
+      const btnIniciar = document.getElementById('btn-iniciar');
+      if (btnIniciar) {
+        btnIniciar.innerText = " INICIAR SISTEMA OPERATIVO";
+        btnIniciar.onclick = () => {
+          EVA.init();
+        };
+      }
 
-    const btnSinc = document.getElementById('btnSinc');
-    btnSinc.onclick = () => {
-      EVA.sincronizarDesdeNube();
-    };
+      const btnSinc = document.getElementById('btnSinc');
+      if (btnSinc) {
+        btnSinc.onclick = () => {
+          EVA.sincronizarDesdeNube();
+        };
+      }
+    } catch (error) {
+      console.warn("EVA: sesión guardada corrupta; se ignora.", error);
+      localStorage.removeItem('eva_session');
+    }
 
   }
 });
