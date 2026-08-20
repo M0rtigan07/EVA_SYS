@@ -1446,56 +1446,63 @@ class EVASystem {
     }
   }
 
-
   async updateLogic() {
+    let pesoGuardado = this.ultimoPeso || 70;
 
-    const result = await tursoClient.execute({
-      sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
-      args: [this.userId]
-    });
+    try {
+      // Consulta los datos a través de tu endpoint API en lugar de acceder directamente al cliente DB
+      const res = await fetch(`/api/peso?usuario=${encodeURIComponent(this.user)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.peso) {
+          pesoGuardado = parseFloat(data.peso);
+        }
+      }
+    } catch (err) {
+      console.warn("EVA: No se pudo obtener el último peso de la nube, usando valor local:", err);
+    }
 
-    const pesoGuardado = parseFloat(result.rows[0].peso);
+    const pesoActual = parseFloat(this.peso);
+    console.log("Comparando peso actual:", pesoActual, "con peso anterior:", pesoGuardado);
 
-    const pesoActual = this.peso; // Ahora esto viene del valor que guardaste
-    console.log("Comparando peso actual:", pesoActual, "con peso anterior:", this.ultimoPeso);
-
-
-    const diferencia = Math.abs(pesoActual - pesoGuardado);
-
+    const diferencia = Math.abs(pesoActual - pesoGuardado).toFixed(1);
     console.log("Diferencia de peso:", diferencia);
 
     if (pesoActual > pesoGuardado) {
       this.actualizarEstadoEVA(true);
       localStorage.setItem('eva_enojada', 'true');
-      this.hablar("¡Peso registrado mayor que el último! " + this.user + " has engordado " + diferencia + " kilos. Esto no es bueno para tu progreso. ¡A ENTRENAR MÁS DURO!", 'regandina');
-    }
-
-    if (pesoActual < pesoGuardado) {
+      this.hablar(`¡Peso registrado mayor que el último! ${this.user} has engordado ${diferencia} kilos. Esto no es bueno para tu progreso. ¡A ENTRENAR MÁS DURO!`, 'regandina');
+    } else if (pesoActual < pesoGuardado) {
       this.actualizarEstadoEVA(false);
       localStorage.setItem('eva_enojada', 'false');
-      this.hablar("¡Peso registrado menor que el último!  has adelgazado " + diferencia + " kilos. Excelente progreso. ¡Sigue así!", 'contenta');
+      this.hablar(`¡Peso registrado menor que el último! Has adelgazado ${diferencia} kilos. Excelente progreso. ¡Sigue así!`, 'contenta');
     }
-
-    // Guardar el peso actual como el "anterior" para la próxima comparación
-    //  localStorage.setItem('eva_ultimo_peso', pesoActual.toString());
-
-
 
     const agua = (this.peso * 0.035).toFixed(1);
     const details = document.getElementById('details-box');
-    
+
     if (this.routine === "CARDIO") {
       const sesiones = this.db.filter(s => s.rutina === "CARDIO").length;
-      let t = this.calcularTiempoCardio(); // Calculamos el tiempo dinámicamente según la racha
-      this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
-      details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-      document.getElementById('cardio-session-box').style.display = "block";
-      document.getElementById('timer-display').innerText = `${t}:00`;
+      let t = this.calcularTiempoCardio();
+      this.configCardio = {
+        total: t,
+        fases: {
+          calentamiento: Math.round(t * 0.2),
+          nucleo: Math.round(t * 0.6),
+          sprint: Math.round(t * 0.2)
+        }
+      };
+      if (details) details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+
+      const cardioBox = document.getElementById('cardio-session-box');
+      if (cardioBox) cardioBox.style.display = "block";
+
+      const timerDisp = document.getElementById('timer-display');
+      if (timerDisp) timerDisp.innerText = `${t}:00`;
     } else {
-      details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+      if (details) details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
     }
   }
-
 
 
 
