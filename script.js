@@ -1483,32 +1483,17 @@ class EVASystem {
 
     const agua = (this.peso * 0.035).toFixed(1);
     const details = document.getElementById('details-box');
-
+    
     if (this.routine === "CARDIO") {
-     const sesiones = this.db.filter(s => s.rutina === "CARDIO").length;
-  let t = this.calcularTiempoCardio(); // Calculamos el tiempo dinámicamente según la racha
-  this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
-  
-  if (details) {
-    details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-  }
-
-  // Captura segura de los elementos para evitar errores
-  const cardioBox = document.getElementById('cardio-session-box');
-  const timerDisplay = document.getElementById('timer-display');
-
-  if (cardioBox) {
-    cardioBox.style.display = "block";
-  }
-
-  if (timerDisplay) {
-    timerDisplay.innerText = `${t}:00`;
-  }
-
-} else {
-  if (details) {
-    details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
-  }
+      const sesiones = this.db.filter(s => s.rutina === "CARDIO").length;
+      let t = this.calcularTiempoCardio(); // Calculamos el tiempo dinámicamente según la racha
+      this.configCardio = { total: t, fases: { calentamiento: Math.round(t * 0.2), nucleo: Math.round(t * 0.6), sprint: Math.round(t * 0.2) } };
+      details.innerHTML = `<strong>BICI</strong>: ${t} MIN<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+      document.getElementById('cardio-session-box').style.display = "block";
+      document.getElementById('timer-display').innerText = `${t}:00`;
+    } else {
+      details.innerHTML = `<strong>RUTINA</strong>: FUERZA<br><strong>AGUA RECOMENDADA</strong>: ${agua}L`;
+    }
   }
 
 
