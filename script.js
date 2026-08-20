@@ -9,16 +9,13 @@ class EVASystem {
     this.initialized = false;
     this.wakeLock = null;
     this.tiempoRestanteAlPausar = 0;
-    this.user = localStorage.getItem('eva_user') || "";
-    this.userId = this.user || null;
-    this.ausenciaDetectada = false;
+    this.user = "";
+    //  this.ausenciaDetectada = false;
     this.timerReactivacion = null;
     this.segundosParaReactivar = 25; // Ajusta aquí el tiempo que quieras de margen
     this.timerReactivacion = null;
     this.entrenamientoActivo = false; // Importante inicializar esto
     this.db = JSON.parse(localStorage.getItem('eva_db')) || [];
-    this.routine = "DESCANSO";
-    this.recognition = null;
     this.peso = 70;
     this.pesoActual = localStorage.getItem('eva_peso_actual');
     this.ultimoPeso = localStorage.getItem('eva_ultimo_peso');
@@ -538,12 +535,8 @@ class EVASystem {
 
 
   hablar(texto, tipo = "habla") {
-    if (this.recognition && typeof this.recognition.stop === 'function') {
-      this.recognition.stop();
-    }
-    if (this.speech && typeof this.speech.cancel === 'function') {
-      this.speech.cancel();
-    }
+    if (this.recognition) this.recognition.stop();
+    this.speech.cancel();
 
     this.setVideo(tipo);
 
@@ -577,11 +570,7 @@ class EVASystem {
 
       if (!this.misionCumplida) {
         setTimeout(() => {
-          try {
-            if (this.recognition && typeof this.recognition.start === 'function') {
-              this.recognition.start();
-            }
-          } catch (e) { }
+          try { this.recognition.start(); } catch (e) { }
         }, 500);
       }
 
@@ -654,8 +643,7 @@ class EVASystem {
     const usuario = localStorage.getItem('eva_user');
 
     // 1. Cargar primero datos de localStorage para arranque instantáneo (modo offline)
-    this.user = usuario || this.user || "";
-    this.userId = this.user || null;
+    this.user = usuario;
     this.streak = parseInt(localStorage.getItem('eva_streak')) || 0;
 
     this.peso = parseFloat(localStorage.getItem('eva_peso_usuario')) || 70;
@@ -692,27 +680,23 @@ class EVASystem {
     });
 
 
-    const backupBox = document.getElementById('backup');
-    if (backupBox) backupBox.style.display = 'none';
+    const backup = document.getElementById('backup').style.display = 'none';
 
-    this.user = localStorage.getItem('eva_user') || this.user || "";
-    this.userId = this.user || null;
+    this.user = localStorage.getItem('eva_user');
     console.log("Usuario detectado:", this.user);
 
     localStorage.setItem('eva_peso_usuario', this.peso);
     console.log("Peso inicial establecido en:", this.peso, "kg");
 
     const btnIniciar = document.getElementById('btn-iniciar');
-    if (btnIniciar) {
-      btnIniciar.disabled = true;
-      btnIniciar.innerText = "SYSTEM: ONLINE";
-      btnIniciar.style.opacity = "0.6";
-      btnIniciar.style.cursor = "default";
-    }
+    btnIniciar.disabled = true;
+    btnIniciar.innerText = "SYSTEM: ONLINE";
+    btnIniciar.style.opacity = "0.6";
+    btnIniciar.style.cursor = "default";
 
 
     const controlPeso = document.getElementById('control-peso-manual');
-    if (controlPeso) controlPeso.style.display = 'block';
+    controlPeso.style.display = 'block';
 
     // 2. Actualizamos la interfaz (esto hace que veas el cambio en pantalla)
     const display = document.getElementById('display-peso');
@@ -724,15 +708,11 @@ class EVASystem {
 
     const pesoTxt = localStorage.getItem('eva_ultimo_peso') || "70";
 
-    if (infoPeso) {
-      infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
-    }
+    infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
 
 
     // En tu método de inicialización o donde configuras el evento
-    const btnGuardarPeso = document.getElementById('btn-guardar-peso');
-    if (btnGuardarPeso) {
-      btnGuardarPeso.addEventListener('click', () => {
+    document.getElementById('btn-guardar-peso').addEventListener('click', () => {
 
       const input = document.getElementById('input-peso');
       const valorInput = input.value;
@@ -759,7 +739,6 @@ class EVASystem {
       }
 
     });
-    }
 
     // 1. Lo primero: ¿Ya entreno hoy?
     // const bloqueado = this.checkBloqueoDiario();
@@ -829,13 +808,12 @@ class EVASystem {
     //   document.getElementById('input-peso').value = this.lastWeight;
 
     const controlP = document.getElementById('control-peso-manual');
-    if (controlP) {
-      controlP.style.display = 'block';
-      controlP.style.animation = 'fadeIn 2s';
-      controlP.onclick = () => {
-        console.log("Peso manual actualizado a:", this.lastWeight);
-      };
-    }
+    controlP.style.display = 'block';
+    controlP.style.animation = 'fadeIn 2s';
+    controlP.onclick = () => {
+      console.log("Peso manual actualizado a:", this.lastWeight);
+
+    };
 
 
 
@@ -1470,24 +1448,15 @@ class EVASystem {
 
 
   async updateLogic() {
-    let pesoGuardado = this.peso;
 
-    if (typeof window !== 'undefined' && window.tursoClient && this.userId) {
-      try {
-        const result = await window.tursoClient.execute({
-          sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
-          args: [this.userId]
-        });
+    const result = await tursoClient.execute({
+      sql: "SELECT peso FROM registros_peso WHERE user_id = ? ORDER BY fecha DESC LIMIT 1",
+      args: [this.userId]
+    });
 
-        if (result && result.rows && result.rows.length > 0) {
-          pesoGuardado = parseFloat(result.rows[0].peso) || this.peso;
-        }
-      } catch (error) {
-        console.warn("EVA: No se pudo consultar el peso remoto; usando valor local.", error);
-      }
-    }
+    const pesoGuardado = parseFloat(result.rows[0].peso);
 
-    const pesoActual = this.peso;
+    const pesoActual = this.peso; // Ahora esto viene del valor que guardaste
     console.log("Comparando peso actual:", pesoActual, "con peso anterior:", this.ultimoPeso);
 
 
@@ -1708,8 +1677,8 @@ class EVASystem {
     const fraseAlivio = "Sabia decisión. No me vuelvas a asustar así. Sigamos con el plan.";
 
     // Usamos una lógica interna similar a 'hablar' pero asegurando el cierre del video
-    if (this.recognition && typeof this.recognition.stop === 'function') this.recognition.stop();
-    if (this.speech && typeof this.speech.cancel === 'function') this.speech.cancel();
+    if (this.recognition) this.recognition.stop();
+    this.speech.cancel();
 
     const msg = new SpeechSynthesisUtterance(fraseAlivio);
     msg.lang = 'es-ES';
@@ -1956,8 +1925,6 @@ class EVASystem {
 
   setVideo(tipo) {
     const v = document.getElementById('eva-display');
-    if (!v || !this.library || !this.library.vids) return;
-
     let tipoReal = tipo;
     if (tipo === 'reposo' && this.estaEnojada) {
       tipoReal = 'reposo_enojada';
@@ -2025,28 +1992,32 @@ const EVA = new EVASystem();
  */
 
 // En tu método de inicialización o donde configuras el evento
-const btnGuardarPesoGlobal = document.getElementById('btn-guardar-peso');
-if (btnGuardarPesoGlobal) {
-  btnGuardarPesoGlobal.addEventListener('click', () => {
-    const input = document.getElementById('input-peso-manual');
-    if (!input) return;
+document.getElementById('btn-guardar-peso').addEventListener('click', () => {
+  const input = document.getElementById('input-peso-manual');
+  const nuevoPeso = parseInt(input.value, 10);
 
-    const nuevoPeso = parseInt(input.value, 10);
+  if (!isNaN(nuevoPeso)) {
+    // 1. Actualizar memoria interna
+    this.lastWeight = nuevoPeso;
 
-    if (!isNaN(nuevoPeso)) {
-      // 1. Actualizar memoria interna
-      this.lastWeight = nuevoPeso;
+    // 2. Persistir en localStorage
+    localStorage.setItem('eva_ultimo_peso', nuevoPeso.toString());
 
-      // 2. Persistir en localStorage
-      localStorage.setItem('eva_ultimo_peso', nuevoPeso.toString());
+    /*  const infoPeso = document.getElementById('display-peso-kg');
 
-      // 3. Ejecutar la lógica de reacción
-      EVA.updateLogic();
+    const pesoTxt = localStorage.getItem('eva_peso_usuario');
 
-      console.log("Peso actualizado a:", this.lastWeight);
-    }
-  });
-}
+    infoPeso.innerHTML = `PESO: ${pesoTxt} kg`;
+ */
+    // 3. Ejecutar la lógica de reacción
+    EVA.updateLogic();
+
+    console.log("Peso actualizado a:", this.lastWeight);
+
+
+
+  }
+});
 
 
 
@@ -2065,34 +2036,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Verificar si ya hay una sesión activa
   const tokenGuardado = localStorage.getItem('eva_session');
   if (tokenGuardado) {
-    try {
-      const data = JSON.parse(atob(tokenGuardado));
-      //  document.getElementById('mensaje-info').innerText = `USUARIO: ${data.user}`;
-      // Opcional: Deshabilitar el botón de login aquí
-      const btnInfoUsuario = document.getElementById('btn-info-usuario');
-      if (btnInfoUsuario) {
-        btnInfoUsuario.innerText = `INFO USUARIO: ${data.user}`;
-        btnInfoUsuario.style.display = "block";
-      }
+    const data = JSON.parse(atob(tokenGuardado));
+    //  document.getElementById('mensaje-info').innerText = `USUARIO: ${data.user}`;
+    // Opcional: Deshabilitar el botón de login aquí
+    const btnInfoUsuario = document.getElementById('btn-info-usuario');
+    btnInfoUsuario.innerText = `INFO USUARIO: ${data.user}`;
+    btnInfoUsuario.style.display = "block";
 
-      const btnIniciar = document.getElementById('btn-iniciar');
-      if (btnIniciar) {
-        btnIniciar.innerText = " INICIAR SISTEMA OPERATIVO";
-        btnIniciar.onclick = () => {
-          EVA.init();
-        };
-      }
+    const btnIniciar = document.getElementById('btn-iniciar');
+    btnIniciar.innerText = " INICIAR SISTEMA OPERATIVO";
+    btnIniciar.onclick = () => {
+      EVA.init();
+    };
 
-      const btnSinc = document.getElementById('btnSinc');
-      if (btnSinc) {
-        btnSinc.onclick = () => {
-          EVA.sincronizarDesdeNube();
-        };
-      }
-    } catch (error) {
-      console.warn("EVA: sesión guardada corrupta; se ignora.", error);
-      localStorage.removeItem('eva_session');
-    }
+    const btnSinc = document.getElementById('btnSinc');
+    btnSinc.onclick = () => {
+      EVA.sincronizarDesdeNube();
+    };
 
   }
 });
