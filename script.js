@@ -1172,9 +1172,12 @@ class EVASystem {
     const config = this.calcularConfiguracionFuerza();
     const primeraTarea = this.ejerciciosFuerza[0].replace('_', ' ');
 
-    this.hablar(`Entrenamiento de fuerza iniciado. Calentamos gemelos durante 60 segundos antes de comenzar.`);
-    this.playMusic('calentamiento', 0.4);
+    // 1. Establecer primero el vídeo/GIF de gemelos
     this.setVideo("Calentamiento_Gemelos");
+    this.playMusic('calentamiento', 0.4);
+
+    this.hablar(`Entrenamiento de fuerza iniciado. Calentamos gemelos durante 60 segundos antes de comenzar.`);
+
 
     let tiempoCalentamiento = 60;
     this.actualizarTimerVisual(tiempoCalentamiento);
@@ -1184,6 +1187,11 @@ class EVASystem {
     this.timerInterval = setInterval(() => {
       tiempoCalentamiento--;
       this.actualizarTimerVisual(tiempoCalentamiento);
+
+      // Asegura que mientras dure el calentamiento de gemelos no cambie a reposo
+      if (tiempoCalentamiento > 0 && this.videoElement.poster === '') {
+        this.setVideo("Calentamiento_Gemelos");
+      }
 
       if (tiempoCalentamiento <= 0) {
         clearInterval(this.timerInterval);
@@ -2010,26 +2018,29 @@ class EVASystem {
       const randomIndex = Math.floor(Math.random() * pool.length);
       const videoName = pool[randomIndex];
 
-      const fullPath = `assets/videos/${videoName}`;
+      // Se sanitiza el nombre de archivo para evitar errores 404 por espacios
+      const fullPath = `assets/videos/${encodeURIComponent(videoName)}`;
 
       console.log("Intentando cargar vídeo:", fullPath);
 
-      // Si el archivo es un GIF, usamos poster para que el elemento <video> lo muestre en bucle
       if (videoName.endsWith('.gif')) {
-        v.removeAttribute('src'); // Limpiamos la fuente del video
-        v.poster = fullPath;      // Asignamos el GIF como poster del reproductor
+        v.removeAttribute('src');
+        v.poster = fullPath;
       } else {
-        v.removeAttribute('poster'); // Limpiamos el poster si pasamos a MP4
+        v.removeAttribute('poster');
         v.src = fullPath;
         v.load();
         v.play().catch(e => {
-          console.error("Error al reproducir vídeo:", e);
-          v.muted = true;
-          v.play();
+          // Se ignora el AbortError causado por interrupciones rápidas
+          if (e.name !== 'AbortError') {
+            console.error("Error al reproducir vídeo:", e);
+            v.muted = true;
+            v.play();
+          }
         });
       }
     }
-  } // Cierra setVideo
+  }
 
   // --- 2. PROTOCOLOS DE ENERGÍA ---
   async solicitarWakeLock() {
