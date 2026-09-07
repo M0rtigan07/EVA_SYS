@@ -29,7 +29,7 @@ class EVASystem {
     this.ejercicioFuerzaActualIndex = 0;
     this.serieActual = 1;
 
-    this.ejerciciosFuerza = ["Calentamiento_Gemelos", "Abdominales", "Sentadillas", "Pesas_Frontal", "Pesas_Lateral"];
+    this.ejerciciosFuerza = ["Abdominales", "Sentadillas", "Pesas_Frontal", "Pesas_Lateral"];
 
     // 1. Definir los objetos de audio/video primero
     this.bgMusic = new Audio();
@@ -74,25 +74,31 @@ class EVASystem {
 
     this.videoElement.onended = () => {
       if (this.entrenamientoActivo) {
-        // --- AQUÍ ESTÁ LA MAGIA ---
-        // Consultamos qué fase de cardio está escrita en el UI
-        const fase = document.getElementById('fase-actual').innerText;
-
-        if (fase === "CALENTAMIENTO") {
-          this.setVideo('cardio_suave');
-        } else if (fase === "ENTRENAMIENTO") {
-          this.setVideo('cardio_normal');
-        } else if (fase === "SPRINT") {
-          this.setVideo('cardio_sprint');
-        } else {
-          // Por si acaso, un loop de seguridad del mismo video
-          this.videoElement.play();
+        if (this.routine === "CARDIO") {
+          const fase = document.getElementById('fase-actual')?.innerText;
+          if (fase === "CALENTAMIENTO") {
+            this.setVideo('cardio_suave');
+          } else if (fase === "ENTRENAMIENTO") {
+            this.setVideo('cardio_normal');
+          } else if (fase === "SPRINT") {
+            this.setVideo('cardio_sprint');
+          } else {
+            this.videoElement.play();
+          }
+        } else if (this.routine === "FUERZA") {
+          // En rutina de fuerza, mantén en bucle el ejercicio actual
+          const ejercicioActual = this.ejerciciosFuerza[this.ejercicioFuerzaActualIndex];
+          if (ejercicioActual) {
+            this.setVideo(ejercicioActual);
+          } else {
+            this.videoElement.play();
+          }
         }
       } else {
-        // Si no hay entrenamiento, vuelve a su reposo (feliz o enojada)
         this.setVideo('reposo');
       }
     };
+
 
     // this.initVoiceRecognition();
   } // FIN DEL CONSTRUCTOR
@@ -1145,26 +1151,27 @@ class EVASystem {
     this.entrenamientoActivo = true;
     this.currentMusicVolume = 0.4;
 
-    document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
-    document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
-    document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
+    document.getElementById('control-peso-manual').style.display = 'none';
+    document.getElementById('btn-info-usuario').style.display = 'none';
+    document.getElementById('tools-container').style.display = 'none';
     document.getElementById('infoEntreno').style.display = "none";
     document.getElementById('fechaRutina').style.display = "none";
 
-    // --- AQUÍ APLICAMOS LA PROGRESIÓN ---
-    this.streak = this.obtenerRachaActualizada(); // Aseguramos dato fresco
-    const config = this.calcularConfiguracionFuerza();
+    // Muestra el contenedor de temporizador para que el usuario vea el contador
+    const cardioBox = document.getElementById('cardio-session-box');
+    if (cardioBox) {
+      cardioBox.style.display = "block";
+      document.getElementById('fase-actual').innerText = "CALENTAMIENTO GEMELOS";
+    }
 
+    this.streak = this.obtenerRachaActualizada();
+    const config = this.calcularConfiguracionFuerza();
     const primeraTarea = this.ejerciciosFuerza[0].replace('_', ' ');
 
-    // 1. EVA dicta la orden inicial de calentamiento
     this.hablar(`Entrenamiento de fuerza iniciado. Calentamos gemelos durante 60 segundos antes de comenzar.`);
     this.playMusic('calentamiento', 0.4);
-
-    // Muestra el GIF de gemelos
     this.setVideo("Calentamiento_Gemelos");
 
-    // Temporizador visual de 60 segundos para el calentamiento
     let tiempoCalentamiento = 60;
     this.actualizarTimerVisual(tiempoCalentamiento);
 
@@ -1178,27 +1185,23 @@ class EVASystem {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
 
-        // CONTINUA TU CÓDIGO ORIGINAL TRAS EL CALENTAMIENTO:
+        // Ocultamos el temporizador una vez terminado el calentamiento por tiempo
+        if (cardioBox) cardioBox.style.display = "none";
+
         this.hablar(`Calentamiento listo. Hoy tu objetivo son ${config.series} series de ${config.reps} repeticiones. Primer ejercicio: ${primeraTarea}. ¡A por ello!`);
         this.playMusic('entrenamiento', 0.4);
 
-        // 2. Visualización limpia en el contenedor tipo carrusel
         const lista = document.getElementById('lista-ejercicios');
-        if (lista) {
-          lista.style.display = "flex";
-        }
+        if (lista) lista.style.display = "flex";
 
-        // Ocultamos las demás y forzamos que solo se vea la primera tarjeta
         this.ejerciciosFuerza.forEach((_, i) => {
           const p = document.getElementById(`paso-${i}`);
           if (p) p.style.display = (i === 0) ? "block" : "none";
         });
 
-        // Ocultamos el botón para limpiar la pantalla de la tablet
         const btnFuerza = document.getElementById('btn-iniciar-fuerza');
         if (btnFuerza) btnFuerza.style.display = 'none';
 
-        // 3. 💥 ¡CLAVE! Cambiamos el avatar de EVA para que empiece a entrenar este ejercicio específico
         this.setVideo(this.ejerciciosFuerza[0]);
       }
     }, 1000);
