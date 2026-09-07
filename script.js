@@ -2018,8 +2018,9 @@ class EVASystem {
       const randomIndex = Math.floor(Math.random() * pool.length);
       const videoName = pool[randomIndex];
 
-      // Se sanitiza el nombre de archivo para evitar errores 404 por espacios
-      const fullPath = `assets/videos/${encodeURIComponent(videoName)}`;
+      // Reemplaza los espacios por %20 directamente sin alterar barras o nombres especiales
+      const cleanVideoName = videoName.trim().replace(/ /g, '%20');
+      const fullPath = `assets/videos/${cleanVideoName}`;
 
       console.log("Intentando cargar vídeo:", fullPath);
 
@@ -2031,7 +2032,6 @@ class EVASystem {
         v.src = fullPath;
         v.load();
         v.play().catch(e => {
-          // Se ignora el AbortError causado por interrupciones rápidas
           if (e.name !== 'AbortError') {
             console.error("Error al reproducir vídeo:", e);
             v.muted = true;
