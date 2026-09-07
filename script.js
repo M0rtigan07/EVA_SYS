@@ -1158,9 +1158,9 @@ class EVASystem {
     document.getElementById('fechaRutina').style.display = "none";
 
     // Muestra el contenedor de temporizador para que el usuario vea el contador
-    const cardioBox = document.getElementById('cardio-session-box');
-    if (cardioBox) {
-      cardioBox.style.display = "block";
+    const timerBox = document.getElementById('timer-display');
+    if (timerBox) {
+      timerBox.style.display = "block";
       document.getElementById('fase-actual').innerText = "CALENTAMIENTO GEMELOS";
     }
 
