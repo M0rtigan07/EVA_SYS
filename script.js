@@ -29,7 +29,7 @@ class EVASystem {
     this.ejercicioFuerzaActualIndex = 0;
     this.serieActual = 1;
 
-    this.ejerciciosFuerza = ["Abdominales", "Sentadillas", "Pesas_Frontal", "Pesas_Lateral"];
+    this.ejerciciosFuerza = ["Calentamiento_Gemelos", "Abdominales", "Sentadillas", "Pesas_Frontal", "Pesas_Lateral"];
 
     // 1. Definir los objetos de audio/video primero
     this.bgMusic = new Audio();
@@ -41,6 +41,7 @@ class EVASystem {
     this.library = {
       vids: {
         reposo: ['eva_reposo.mp4', 'eva_reposo2.mp4', 'eva_reposo3.mp4', 'eva_reposo4.mp4', 'eva_reposo5.mp4', 'eva_reposo6.mp4', 'eva_reposo7.mp4', 'eva_pose.mp4', 'eva_patada.mp4', 'eva_baila.mp4', 'eva_baila_2.mp4'],
+        Calentamiento_Gemelos: ['eva_gemelos.gif', 'eva_gemelos1.gif', 'eva_gemelos2.gif'],
         reposo_enojada: ['eva_reposo_enojada.mp4', 'eva_reposo_enojada2.mp4', 'eva_reposo_enojada3.mp4', 'eva_reposo_enojada4.mp4', 'eva_reposo_enojada5.mp4', 'eva_reposo_enojada6.mp4'],
         contenta: ["eva_contenta.mp4", "eva_contenta_2.mp4", "eva_contenta_3.mp4"],
         habla: ['eva_habla.mp4', 'eva_habla2.mp4'],
@@ -69,11 +70,7 @@ class EVASystem {
 
 
     // 3. Ahora que todo existe, asignar los eventos de repetición
-    this.bgMusic.onended = () => {
-      const tipo = this.entrenamientoActivo ? 'entrenamiento' : 'reposo';
-      const vol = this.entrenamientoActivo ? 0.4 : 0.2;
-      this.playMusic(tipo, vol);
-    };
+
 
     this.videoElement.onended = () => {
       if (this.entrenamientoActivo) {
@@ -633,6 +630,38 @@ class EVASystem {
   }
 
 
+  iniciarCalentamientoGemelos(tiempoSegundos = 60, alFinalizar) {
+    // 1. Muestra en el display la fase y el tiempo
+    document.getElementById('fase-actual').innerText = "CALENTAMIENTO GEMELOS";
+
+    // Cargamos el GIF de gemelos que configuramos previamente
+    this.setVideo("Calentamiento_Gemelos");
+
+    this.hablar("Comenzamos con un minuto de calentamiento de gemelos. Eleva los talones suavemente.");
+
+    let tiempoRestante = tiempoSegundos;
+    this.actualizarTimerVisual(tiempoRestante);
+
+    if (this.timerInterval) clearInterval(this.timerInterval);
+
+    this.timerInterval = setInterval(() => {
+      tiempoRestante--;
+      this.actualizarTimerVisual(tiempoRestante);
+
+      if (tiempoRestante <= 0) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+
+        this.hablar("¡Calentamiento completado! Comenzamos la rutina principal.");
+
+        // Llamamos a la función que inicia el bloque de fuerza o cardio
+        if (typeof alFinalizar === 'function') {
+          alFinalizar();
+        }
+      }
+    }, 1000);
+  }
+
 
 
 
@@ -930,17 +959,16 @@ class EVASystem {
     return parseInt(localStorage.getItem('eva_streak')) || 0;
   }
 
+
   iniciarSesionCardio() {
-    this.entrenamientoActivo = true
+    this.entrenamientoActivo = true;
     document.getElementById('btn-start-cardio').style.display = "none";
     document.getElementById('btn-pause-cardio').style.display = "block"; // Mostrar pausa
     document.getElementById('infoEntreno').style.display = "none";
 
-
     document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
     document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
     document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
-
 
     // FORZAMOS LA LECTURA FRESCA DEL DATO
     this.streak = this.obtenerRachaActualizada();
@@ -953,7 +981,6 @@ class EVASystem {
     } else {
       document.getElementById('estado').innerText = "MOD: PRO";
       document.getElementById('estado').style.color = "green";
-
       this.estado = "PROGRESION";
     }
 
@@ -966,57 +993,78 @@ class EVASystem {
     console.log("DEBUG - Racha actual:", this.streak);
     console.log("DEBUG - Tiempo calculado:", minutosCalculados);
 
-    let tiempoRestante = this.configCardio.total * 60;
+    // --- FASE PREVIA: CALENTAMIENTO DE GEMELOS (60s) ---
+    document.getElementById('fase-actual').innerText = "CALENTAMIENTO GEMELOS";
+    this.hablar("Calentamiento de gemelos iniciado. Haz elevaciones de talón durante 60 segundos.");
 
-
-
-    const fases = this.configCardio.fases;
-
-    document.getElementById('fase-actual').innerText = "CALENTAMIENTO";
-
-    // Primero damos la orden de voz
-    this.hablar("Calentamiento iniciado. ¡A los pedales!");
-
-    // Dejamos un margen para que el video cargue sin conflicto con el habla inicial
     setTimeout(() => {
-      this.setVideo("cardio_suave");
-      this.playMusic('calentamiento');
+      this.setVideo("Calentamiento_Gemelos");
+      this.playMusic("calentamiento");
     }, 500);
+
+    let tiempoGemelos = 60;
+    this.actualizarTimerVisual(tiempoGemelos);
 
     if (this.timerInterval) clearInterval(this.timerInterval);
 
     this.timerInterval = setInterval(() => {
-      tiempoRestante--;
-      this.actualizarTimerVisual(tiempoRestante);
+      tiempoGemelos--;
+      this.actualizarTimerVisual(tiempoGemelos);
 
-      const segsTrans = (this.configCardio.total * 60) - tiempoRestante;
-      const minsTrans = segsTrans / 60;
-
-      // CONTROL DE VÍDEO POR FASES (Solo cambia si es necesario)
-      if (minsTrans >= fases.calentamiento && minsTrans < (fases.calentamiento + fases.nucleo)) {
-        if (document.getElementById('fase-actual').innerText !== "ENTRENAMIENTO") {
-          document.getElementById('fase-actual').innerText = "ENTRENAMIENTO";
-          this.setVideo("cardio_normal");
-          this.playMusic('entrenamiento');
-          this.hablar("Pasamos a fase de entrenamiento. No bajes el ritmo.");
-        }
-      }
-      else if (minsTrans >= (fases.calentamiento + fases.nucleo)) {
-        if (document.getElementById('fase-actual').innerText !== "SPRINT") {
-          document.getElementById('fase-actual').innerText = "SPRINT";
-          this.setVideo("cardio_sprint");
-          this.playMusic('sprint');
-          this.hablar("¡Sprint final! ¡Máxima intensidad ahora!");
-        }
-      }
-
-      if (tiempoRestante <= 0) {
+      if (tiempoGemelos <= 0) {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
-        this.finalizarCardio();
+
+        // --- INICIO DEL CARDIO PRINCIPAL (BICI) ---
+        let tiempoRestante = this.configCardio.total * 60;
+        const fases = this.configCardio.fases;
+
+        document.getElementById('fase-actual').innerText = "CALENTAMIENTO";
+
+        // Primero damos la orden de voz
+        this.hablar("Calentamiento completado. ¡A los pedales!");
+
+        // Dejamos un margen para que el video cargue sin conflicto con el habla inicial
+        setTimeout(() => {
+          this.setVideo("cardio_suave");
+          this.playMusic("calentamiento");
+        }, 500);
+
+        this.timerInterval = setInterval(() => {
+          tiempoRestante--;
+          this.actualizarTimerVisual(tiempoRestante);
+
+          const segsTrans = (this.configCardio.total * 60) - tiempoRestante;
+          const minsTrans = segsTrans / 60;
+
+          // CONTROL DE VÍDEO POR FASES (Solo cambia si es necesario)
+          if (minsTrans >= fases.calentamiento && minsTrans < (fases.calentamiento + fases.nucleo)) {
+            if (document.getElementById('fase-actual').innerText !== "ENTRENAMIENTO") {
+              document.getElementById('fase-actual').innerText = "ENTRENAMIENTO";
+              this.setVideo("cardio_normal");
+              this.playMusic('entrenamiento');
+              this.hablar("Pasamos a fase de entrenamiento. No bajes el ritmo.");
+            }
+          }
+          else if (minsTrans >= (fases.calentamiento + fases.nucleo)) {
+            if (document.getElementById('fase-actual').innerText !== "SPRINT") {
+              document.getElementById('fase-actual').innerText = "SPRINT";
+              this.setVideo("cardio_sprint");
+              this.playMusic('sprint');
+              this.hablar("Sprint final! ¡Máxima intensidad ahora!");
+            }
+          }
+
+          if (tiempoRestante <= 0) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+            this.finalizarCardio();
+          }
+        }, 1000);
       }
     }, 1000);
   }
+
 
   alternarPausaCardio() {
     const btn = document.getElementById('btn-pause-cardio');
@@ -1103,35 +1151,57 @@ class EVASystem {
     document.getElementById('infoEntreno').style.display = "none";
     document.getElementById('fechaRutina').style.display = "none";
 
-
     // --- AQUÍ APLICAMOS LA PROGRESIÓN ---
     this.streak = this.obtenerRachaActualizada(); // Aseguramos dato fresco
     const config = this.calcularConfiguracionFuerza();
 
     const primeraTarea = this.ejerciciosFuerza[0].replace('_', ' ');
 
-    // 1. EVA dicta las órdenes por voz de manera limpia
-    this.hablar(`Entrenamiento de fuerza iniciado. Hoy tu objetivo son ${config.series} series de ${config.reps} repeticiones. Primer ejercicio: ${primeraTarea}. ¡A por ello!`);
-    this.playMusic('entrenamiento', 0.4);
+    // 1. EVA dicta la orden inicial de calentamiento
+    this.hablar(`Entrenamiento de fuerza iniciado. Calentamos gemelos durante 60 segundos antes de comenzar.`);
+    this.playMusic('calentamiento', 0.4);
 
-    // 2. Visualización limpia en el contenedor tipo carrusel
-    const lista = document.getElementById('lista-ejercicios');
-    if (lista) {
-      lista.style.display = "flex";
-    }
+    // Muestra el GIF de gemelos
+    this.setVideo("Calentamiento_Gemelos");
 
-    // Ocultamos las demás y forzamos que solo se vea la primera tarjeta
-    this.ejerciciosFuerza.forEach((_, i) => {
-      const p = document.getElementById(`paso-${i}`);
-      if (p) p.style.display = (i === 0) ? "block" : "none";
-    });
+    // Temporizador visual de 60 segundos para el calentamiento
+    let tiempoCalentamiento = 60;
+    this.actualizarTimerVisual(tiempoCalentamiento);
 
-    // Ocultamos el botón para limpiar la pantalla de la tablet
-    const btnFuerza = document.getElementById('btn-iniciar-fuerza');
-    if (btnFuerza) btnFuerza.style.display = 'none';
+    if (this.timerInterval) clearInterval(this.timerInterval);
 
-    // 3. 💥 ¡CLAVE! Cambiamos el avatar de EVA para que empiece a entrenar este ejercicio específico
-    this.setVideo(this.ejerciciosFuerza[0]);
+    this.timerInterval = setInterval(() => {
+      tiempoCalentamiento--;
+      this.actualizarTimerVisual(tiempoCalentamiento);
+
+      if (tiempoCalentamiento <= 0) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+
+        // CONTINUA TU CÓDIGO ORIGINAL TRAS EL CALENTAMIENTO:
+        this.hablar(`Calentamiento listo. Hoy tu objetivo son ${config.series} series de ${config.reps} repeticiones. Primer ejercicio: ${primeraTarea}. ¡A por ello!`);
+        this.playMusic('entrenamiento', 0.4);
+
+        // 2. Visualización limpia en el contenedor tipo carrusel
+        const lista = document.getElementById('lista-ejercicios');
+        if (lista) {
+          lista.style.display = "flex";
+        }
+
+        // Ocultamos las demás y forzamos que solo se vea la primera tarjeta
+        this.ejerciciosFuerza.forEach((_, i) => {
+          const p = document.getElementById(`paso-${i}`);
+          if (p) p.style.display = (i === 0) ? "block" : "none";
+        });
+
+        // Ocultamos el botón para limpiar la pantalla de la tablet
+        const btnFuerza = document.getElementById('btn-iniciar-fuerza');
+        if (btnFuerza) btnFuerza.style.display = 'none';
+
+        // 3. 💥 ¡CLAVE! Cambiamos el avatar de EVA para que empiece a entrenar este ejercicio específico
+        this.setVideo(this.ejerciciosFuerza[0]);
+      }
+    }, 1000);
   }
 
   // --- MÉTODOS DE FUERZA SIMPLIFICADOS ---
@@ -1899,21 +1969,26 @@ class EVASystem {
   }
 
 
-
   playMusic(tipo, volumen = 0.4) {
     const pool = this.library.musica[tipo];
     if (pool && pool.length > 0) {
+      // Selección aleatoria del siguiente tema de la lista
       const seleccion = pool[Math.floor(Math.random() * pool.length)];
 
-      if (this.bgMusic.src.indexOf(seleccion) === -1) {
-        this.bgMusic.src = seleccion;
-        // Guardamos el volumen actual para recuperarlo luego
-        this.currentMusicVolume = volumen;
-        this.bgMusic.volume = volumen;
-        this.bgMusic.play().catch(e => console.log("Error Audio:", e));
-      }
+      // Guardamos el volumen de referencia
+      this.currentMusicVolume = volumen;
+      this.bgMusic.volume = volumen;
+
+      // Asignamos la nueva fuente y reproducimos inmediatamente
+      this.bgMusic.src = seleccion;
+      this.bgMusic.load();
+
+      this.bgMusic.play().catch(e => {
+        console.warn("EVA Audio autoplay prevenido o interrumpido:", e);
+      });
     }
   }
+
 
   setVideo(tipo) {
     const v = document.getElementById('eva-display');
@@ -1932,13 +2007,20 @@ class EVASystem {
 
       console.log("Intentando cargar vídeo:", fullPath);
 
-      v.src = fullPath;
-      v.load();
-      v.play().catch(e => {
-        console.error("Error al reproducir vídeo:", e);
-        v.muted = true;
-        v.play();
-      });
+      // Si el archivo es un GIF, usamos poster para que el elemento <video> lo muestre en bucle
+      if (videoName.endsWith('.gif')) {
+        v.removeAttribute('src'); // Limpiamos la fuente del video
+        v.poster = fullPath;      // Asignamos el GIF como poster del reproductor
+      } else {
+        v.removeAttribute('poster'); // Limpiamos el poster si pasamos a MP4
+        v.src = fullPath;
+        v.load();
+        v.play().catch(e => {
+          console.error("Error al reproducir vídeo:", e);
+          v.muted = true;
+          v.play();
+        });
+      }
     }
   } // Cierra setVideo
 
