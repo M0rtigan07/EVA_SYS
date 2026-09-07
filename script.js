@@ -1156,11 +1156,15 @@ class EVASystem {
     document.getElementById('tools-container').style.display = 'none';
     document.getElementById('infoEntreno').style.display = "none";
     document.getElementById('fechaRutina').style.display = "none";
+    document.getElementById('btn-start-cardio').style.display = "none";
+    document.getElementById('btn-pause-cardio').style.display = "none";
+    document.getElementById('btn-iniciar-fuerza').style.display = "none";
+
 
     // Muestra el contenedor de temporizador para que el usuario vea el contador
-    const timerBox = document.getElementById('timer-display');
-    if (timerBox) {
-      timerBox.style.display = "block";
+    const cardioBox = document.getElementById('cardio-session-box');
+    if (cardioBox) {
+      cardioBox.style.display = "block";
       document.getElementById('fase-actual').innerText = "CALENTAMIENTO GEMELOS";
     }
 
