@@ -1904,15 +1904,15 @@ class EVASystem {
 
 
 
-    if (this.streak >= 15) {
+    if (this.streak >= 45) {
       rango = "LEYENDA TITANIO";
       color = "#e5e4e2"; // Color platino/titanio
       this.setVideo('exito');
-    } else if (this.streak >= 10) {
+    } else if (this.streak >= 20) {
       rango = "COMANDANTE ORO";
       color = "#ffd700"; // Oro
       this.setVideo('exito');
-    } else if (this.streak >= 5) {
+    } else if (this.streak >= 15) {
       rango = "OPERADOR PLATA";
       color = "#c0c0c0"; // Plata
       this.setVideo('exito');
@@ -1930,7 +1930,7 @@ class EVASystem {
     const hitosSecretos = {
       15: { video: 'assets/videos/stallone.mp4', mensaje: '¡Hito desbloqueado! 15 días consecutivos alcanzados.' },
       20: { video: 'assets/videos/cena.mp4', mensaje: '¡Acceso Concedido! Nivel Secreto: 20 días de disciplina.' },
-      30: { video: 'assets/videos/arnold.mp4', mensaje: '¡Rango Elite! 30 días consecutivos registrados.' }
+      45: { video: 'assets/videos/arnold.mp4', mensaje: '¡Rango Elite! 45 días consecutivos registrados.' }
     };
 
     const hitoActual = hitosSecretos[this.streak];
