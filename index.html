@@ -43,6 +43,11 @@
                     <!-- Botón de Pausa/Reanudar (Empieza oculto) -->
                     <button id="btn-pause-cardio" class="btn-tech" onclick="EVA.alternarPausaCardio()"
                         style="display:none; border-color: #ffd700; color: #ffd700;">PAUSA</button>
+
+                    <button id="btn-confirmar-bici" class="btn-tech"
+                        style="display:none; margin-top:10px; background:var(--blue-tech); color:#000;"
+                        onclick="EVA.continuarBiciCardio()">¡ESTOY LISTO EN LA BICI!</button>
+
                 </div>
 
             </div>
@@ -83,7 +88,7 @@
             <div id="eva-status-indicator" title="Estado del Núcleo"
                 style="width: 10px; height: 10px; border-radius: 50%; background: var(--blue-tech); box-shadow: 0 0 10px var(--blue-tech); transition: 0.5s;">
             </div>
-            
+
 
             <!-- Eliminamos o comentamos el vision-core y añadimos controles de flujo -->
             <div id="cardio-session-box" class="card" style="display:none; border-left-color: #ffd700;">

@@ -968,18 +968,18 @@ class EVASystem {
 
   iniciarSesionCardio() {
     this.entrenamientoActivo = true;
+    this.routine = "CARDIO"; // Definimos el tipo de rutina
+
     document.getElementById('btn-start-cardio').style.display = "none";
-    document.getElementById('btn-pause-cardio').style.display = "block"; // Mostrar pausa
+    document.getElementById('btn-pause-cardio').style.display = "block";
+    document.getElementById('btn-confirmar-bici').style.display = "none"; // Aseguramos oculto
     document.getElementById('infoEntreno').style.display = "none";
+    document.getElementById('control-peso-manual').style.display = 'none';
+    document.getElementById('btn-info-usuario').style.display = 'none';
+    document.getElementById('tools-container').style.display = 'none';
 
-    document.getElementById('control-peso-manual').style.display = 'none'; // Ocultamos el control de peso durante fuerza
-    document.getElementById('btn-info-usuario').style.display = 'none'; // Ocultamos el display de peso durante fuerza
-    document.getElementById('tools-container').style.display = 'none'; // Ocultamos el display de peso durante fuerza
-
-    // FORZAMOS LA LECTURA FRESCA DEL DATO
     this.streak = this.obtenerRachaActualizada();
 
-    // Si la racha es baja, EVA avisa que estamos en modo conservador
     if (this.streak < 3) {
       document.getElementById('estado').innerText = "MOD: INICIO";
       document.getElementById('estado').style.color = "yellow";
@@ -990,23 +990,19 @@ class EVASystem {
       this.estado = "PROGRESION";
     }
 
-    // 1. FORZAMOS EL CÁLCULO
     const minutosCalculados = this.calcularTiempoCardio();
-    // 2. SOBREESCRIBIMOS EL OBJETO DE CONFIGURACIÓN
     this.configCardio.total = minutosCalculados;
 
-    // 3. LOG DE CONTROL (Revisa esto en F12 > Console)
-    console.log("DEBUG - Racha actual:", this.streak);
-    console.log("DEBUG - Tiempo calculado:", minutosCalculados);
-
     // --- FASE PREVIA: CALENTAMIENTO DE GEMELOS (60s) ---
-    document.getElementById('fase-actual').innerText = "CALENTAMIENTO GEMELOS";
-    this.hablar("Calentamiento de gemelos iniciado. Haz elevaciones de talón durante 60 segundos.");
+    const cardioBox = document.getElementById('cardio-session-box');
+    if (cardioBox) cardioBox.style.display = "block";
 
-    setTimeout(() => {
-      this.setVideo("Calentamiento_Gemelos");
-      this.playMusic("calentamiento");
-    }, 500);
+    document.getElementById('fase-actual').innerText = "CALENTAMIENTO GEMELOS";
+    this.hablar("Calentamiento de gemelos iniciado. Eleva los talones durante 60 segundos.");
+
+    // Forzamos la carga del GIF de gemelos directamente sin timeout
+    this.setVideo("Calentamiento_Gemelos");
+    this.playMusic("calentamiento");
 
     let tiempoGemelos = 60;
     this.actualizarTimerVisual(tiempoGemelos);
@@ -1021,52 +1017,61 @@ class EVASystem {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
 
-        // --- INICIO DEL CARDIO PRINCIPAL (BICI) ---
-        let tiempoRestante = this.configCardio.total * 60;
-        const fases = this.configCardio.fases;
+        // Al acabar los gemelos, pausamos el timer y mostramos el botón de subida a la bici
+        document.getElementById('fase-actual').innerText = "SUBE A LA BICI";
+        document.getElementById('btn-pause-cardio').style.display = "none";
+        document.getElementById('btn-confirmar-bici').style.display = "block";
 
-        document.getElementById('fase-actual').innerText = "CALENTAMIENTO";
+        this.hablar("¡Calentamiento de gemelos finalizado! Sube a la bicicleta estática y pulsa el botón cuando estés listo.");
+      }
+    }, 1000);
+  }
 
-        // Primero damos la orden de voz
-        this.hablar("Calentamiento completado. ¡A los pedales!");
+  // NUEVO MÉTODO: Se activa al pulsar el botón de confirmación
+  continuarBiciCardio() {
+    document.getElementById('btn-confirmar-bici').style.display = "none";
+    document.getElementById('btn-pause-cardio').style.display = "block";
+    document.getElementById('fase-actual').innerText = "CALENTAMIENTO BICI";
 
-        // Dejamos un margen para que el video cargue sin conflicto con el habla inicial
-        setTimeout(() => {
-          this.setVideo("cardio_suave");
-          this.playMusic("calentamiento");
-        }, 500);
+    this.hablar("Iniciamos pedaleo a ritmo suave.");
+    this.setVideo("cardio_suave");
+    this.playMusic("calentamiento");
 
-        this.timerInterval = setInterval(() => {
-          tiempoRestante--;
-          this.actualizarTimerVisual(tiempoRestante);
+    let tiempoRestante = this.configCardio.total * 60;
+    const fases = this.configCardio.fases;
 
-          const segsTrans = (this.configCardio.total * 60) - tiempoRestante;
-          const minsTrans = segsTrans / 60;
+    this.actualizarTimerVisual(tiempoRestante);
 
-          // CONTROL DE VÍDEO POR FASES (Solo cambia si es necesario)
-          if (minsTrans >= fases.calentamiento && minsTrans < (fases.calentamiento + fases.nucleo)) {
-            if (document.getElementById('fase-actual').innerText !== "ENTRENAMIENTO") {
-              document.getElementById('fase-actual').innerText = "ENTRENAMIENTO";
-              this.setVideo("cardio_normal");
-              this.playMusic('entrenamiento');
-              this.hablar("Pasamos a fase de entrenamiento. No bajes el ritmo.");
-            }
-          }
-          else if (minsTrans >= (fases.calentamiento + fases.nucleo)) {
-            if (document.getElementById('fase-actual').innerText !== "SPRINT") {
-              document.getElementById('fase-actual').innerText = "SPRINT";
-              this.setVideo("cardio_sprint");
-              this.playMusic('sprint');
-              this.hablar("Sprint final! ¡Máxima intensidad ahora!");
-            }
-          }
+    if (this.timerInterval) clearInterval(this.timerInterval);
 
-          if (tiempoRestante <= 0) {
-            clearInterval(this.timerInterval);
-            this.timerInterval = null;
-            this.finalizarCardio();
-          }
-        }, 1000);
+    this.timerInterval = setInterval(() => {
+      tiempoRestante--;
+      this.actualizarTimerVisual(tiempoRestante);
+
+      const segsTrans = (this.configCardio.total * 60) - tiempoRestante;
+      const minsTrans = segsTrans / 60;
+
+      // CONTROL DE FASES DE CARDIO
+      if (minsTrans >= fases.calentamiento && minsTrans < (fases.calentamiento + fases.nucleo)) {
+        if (document.getElementById('fase-actual').innerText !== "ENTRENAMIENTO") {
+          document.getElementById('fase-actual').innerText = "ENTRENAMIENTO";
+          this.setVideo("cardio_normal");
+          this.playMusic('entrenamiento');
+          this.hablar("Pasamos a fase de entrenamiento. No bajes el ritmo.");
+        }
+      } else if (minsTrans >= (fases.calentamiento + fases.nucleo)) {
+        if (document.getElementById('fase-actual').innerText !== "SPRINT") {
+          document.getElementById('fase-actual').innerText = "SPRINT";
+          this.setVideo("cardio_sprint");
+          this.playMusic('sprint');
+          this.hablar("¡Sprint final! ¡Máxima intensidad ahora!");
+        }
+      }
+
+      if (tiempoRestante <= 0) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+        this.finalizarCardio();
       }
     }, 1000);
   }
